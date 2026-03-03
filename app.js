@@ -9,6 +9,9 @@
  *   4. Marquer les séances comme "terminées" (localStorage)
  *   5. Calculer et afficher la jauge de progression globale
  *   6. Gérer la sidebar mobile (hamburger / overlay)
+ *   7. Parcours linéaire : verrouillage des séances non débloquées
+ *   8. Gamification : confettis au déblocage d'une séance
+ *   9. Page d'accueil dédiée avec CTA "Reprendre ma formation"
  * ============================================================
  */
 
@@ -59,10 +62,48 @@ const hamburgerBtn      = document.getElementById('hamburger-btn');
 const sidebar           = document.getElementById('sidebar');
 const sidebarOverlay    = document.getElementById('sidebar-overlay');
 const sidebarCloseBtn   = document.getElementById('sidebar-close-btn');
-const startBtn          = document.getElementById('start-btn');
+const homeBtn           = document.getElementById('home-btn');
 
 /* ============================================================
-   3. NAVIGATION — Construction de la sidebar
+   3. PARCOURS LINÉAIRE — Helpers de verrouillage
+   ============================================================ */
+
+/** Liste plate de toutes les séances (tous modules) */
+function allSessionsFlat() {
+  return courseData.modules.flatMap(m => m.sessions);
+}
+
+/**
+ * Indique si une séance est débloquée.
+ * Règle : la séance 0 est toujours débloquée ;
+ *         la séance N est débloquée si la séance N-1 est terminée.
+ * @param {string} sessionId
+ * @returns {boolean}
+ */
+function isSessionUnlocked(sessionId) {
+  const all = allSessionsFlat();
+  const idx = all.findIndex(s => s.id === sessionId);
+  if (idx <= 0) return true;
+  return completedSessions.has(all[idx - 1].id);
+}
+
+/**
+ * Retourne l'ID de la séance sur laquelle reprendre :
+ * la première séance débloquée mais non terminée,
+ * ou la dernière séance si tout est terminé.
+ * @returns {string|null}
+ */
+function getResumeSessionId() {
+  const all = allSessionsFlat();
+  for (let i = 0; i < all.length; i++) {
+    const unlocked = i === 0 || completedSessions.has(all[i - 1].id);
+    if (unlocked && !completedSessions.has(all[i].id)) return all[i].id;
+  }
+  return all[all.length - 1]?.id || null;
+}
+
+/* ============================================================
+   4. NAVIGATION — Construction de la sidebar
    ============================================================ */
 
 /**
@@ -115,19 +156,26 @@ function buildNav() {
     module.sessions.forEach(session => {
       const li = document.createElement('li');
       const isCompleted = completedSessions.has(session.id);
+      const unlocked    = isSessionUnlocked(session.id);
 
       const btn = document.createElement('button');
-      btn.className = 'session-btn' + (isCompleted ? ' completed' : '');
+      btn.className = 'session-btn'
+        + (isCompleted ? ' completed' : '')
+        + (!unlocked   ? ' locked'    : '');
       btn.dataset.sessionId = session.id;
+      btn.disabled = !unlocked;
       btn.innerHTML = `
         <span class="session-title-text">${session.title}</span>
         <span class="session-status-icon">✅</span>
+        <span class="session-lock-icon">🔒</span>
       `;
 
-      btn.addEventListener('click', () => {
-        closeSidebarMobile();
-        loadSession(session.id);
-      });
+      if (unlocked) {
+        btn.addEventListener('click', () => {
+          closeSidebarMobile();
+          loadSession(session.id);
+        });
+      }
 
       li.appendChild(btn);
       sessionsList.appendChild(li);
@@ -156,14 +204,32 @@ function buildNav() {
 }
 
 /**
- * Met à jour l'état visuel (active / completed) des boutons de séance.
+ * Met à jour l'état visuel (active / completed / locked) des boutons de séance.
+ * Appelée après chaque changement de progression pour refléter les déblocages.
  */
 function refreshNavState() {
   document.querySelectorAll('.session-btn').forEach(btn => {
-    const sid = btn.dataset.sessionId;
-    btn.classList.toggle('active',     sid === currentSessionId);
-    btn.classList.toggle('completed', completedSessions.has(sid));
+    const sid      = btn.dataset.sessionId;
+    const completed = completedSessions.has(sid);
+    const unlocked  = isSessionUnlocked(sid);
+
+    btn.classList.toggle('active',    sid === currentSessionId);
+    btn.classList.toggle('completed', completed);
+    btn.classList.toggle('locked',    !unlocked);
+    btn.disabled = !unlocked;
+
+    /* Ajouter l'écouteur de clic si la séance vient d'être débloquée */
+    if (unlocked && !btn.dataset.listenerAttached) {
+      btn.addEventListener('click', () => {
+        closeSidebarMobile();
+        loadSession(btn.dataset.sessionId);
+      });
+      btn.dataset.listenerAttached = 'true';
+    }
   });
+
+  /* Mettre à jour l'état actif du bouton Accueil */
+  homeBtn.classList.toggle('active', currentSessionId === null);
 }
 
 /* ============================================================
@@ -489,7 +555,25 @@ function validateQuiz(questions, validateBtn) {
 }
 
 /* ============================================================
-   7. PROGRESSION — Marquer une séance comme terminée
+   7. GAMIFICATION — Confettis
+   ============================================================ */
+
+/**
+ * Lance une animation de confettis aux couleurs Tisselia.
+ */
+function launchConfetti() {
+  if (typeof confetti === 'undefined') return;
+  const colors = ['#4db8c8', '#f59b8b', '#ffffff', '#22c55e', '#fbbf24'];
+  /* Rafale depuis la gauche */
+  confetti({ particleCount: 80, angle: 60,  spread: 55, origin: { x: 0,   y: 0.75 }, colors });
+  /* Rafale depuis la droite (légère pause pour l'effet "croisé") */
+  setTimeout(() => {
+    confetti({ particleCount: 80, angle: 120, spread: 55, origin: { x: 1, y: 0.75 }, colors });
+  }, 150);
+}
+
+/* ============================================================
+   8. PROGRESSION — Marquer une séance comme terminée
    ============================================================ */
 
 /**
@@ -502,6 +586,9 @@ function markSessionComplete(sessionId, completeBtn, nextBtn) {
   completedSessions.add(sessionId);
   saveProgress(completedSessions);
 
+  /* Confettis 🎉 */
+  launchConfetti();
+
   /* Mettre à jour le bouton */
   completeBtn.disabled = true;
   completeBtn.textContent = '✅ Séance terminée !';
@@ -512,13 +599,28 @@ function markSessionComplete(sessionId, completeBtn, nextBtn) {
     nextBtn.classList.add('visible');
   }
 
-  /* Rafraîchir la sidebar et la progression */
+  /* Rafraîchir la sidebar (déblocage de la séance suivante) et la progression */
   refreshNavState();
   updateProgressBar();
 }
 
 /* ============================================================
-   8. SIDEBAR MOBILE
+   9. PAGE D'ACCUEIL
+   ============================================================ */
+
+/**
+ * Affiche la page d'accueil et réinitialise l'état courant.
+ */
+function showHomePage() {
+  currentSessionId = null;
+  welcomeScreen.classList.remove('hidden');
+  lessonContent.classList.add('hidden');
+  mainHeaderTitle.textContent = 'Intelligence Artificielle & Cybersécurité';
+  refreshNavState(); /* met homeBtn en .active, retire .active des séances */
+}
+
+/* ============================================================
+   10. SIDEBAR MOBILE
    ============================================================ */
 function openSidebarMobile() {
   sidebar.classList.add('open');
@@ -537,24 +639,32 @@ sidebarCloseBtn.addEventListener('click', closeSidebarMobile);
 sidebarOverlay.addEventListener('click', closeSidebarMobile);
 
 /* ============================================================
-   9. BOUTON "Commencer la formation"
+   11. LISTENERS GLOBAUX
    ============================================================ */
-startBtn.addEventListener('click', () => {
-  /* Charger la première séance du premier module */
-  const firstSession = courseData.modules[0]?.sessions[0];
-  if (firstSession) loadSession(firstSession.id);
+
+/* Bouton "Accueil" dans la sidebar */
+homeBtn.addEventListener('click', () => {
+  closeSidebarMobile();
+  showHomePage();
 });
 
 /* ============================================================
-   10. INITIALISATION
+   12. INITIALISATION
    ============================================================ */
 
 /**
  * Point d'entrée de l'application.
+ * Attache le listener du bouton CTA après que le DOM de la homepage est prêt.
  */
 function init() {
   buildNav();
   updateProgressBar();
+
+  /* Bouton "Reprendre ma formation" (dans la homepage) */
+  document.getElementById('start-btn').addEventListener('click', () => {
+    const resumeId = getResumeSessionId();
+    if (resumeId) loadSession(resumeId);
+  });
 }
 
 /* Lancer l'app quand le DOM est prêt */

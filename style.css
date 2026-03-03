@@ -649,3 +649,164 @@ img, iframe { max-width: 100%; display: block; }
   .welcome-title { font-size: 1.6rem; }
   .lesson-view { padding: 16px 14px; }
 }
+
+/* ============================================================
+   BOUTON ACCUEIL (sidebar)
+   ============================================================ */
+.sidebar-home-wrapper {
+  padding: 12px 12px 4px;
+  flex-shrink: 0;
+}
+
+.sidebar-home-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  color: rgba(255,255,255,0.7);
+  font-size: 0.83rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition), color var(--transition);
+  text-align: left;
+}
+.sidebar-home-btn:hover { background: rgba(255,255,255,0.07); color: #fff; }
+.sidebar-home-btn.active {
+  background: rgba(77,184,200,0.12);
+  color: var(--cyan);
+  font-weight: 600;
+}
+
+.home-btn-icon { font-size: 1rem; }
+
+/* ============================================================
+   SÉANCES VERROUILLÉES
+   ============================================================ */
+.session-btn.locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+/* Annuler tous les effets hover pour les séances verrouillées */
+.session-btn.locked:hover {
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+}
+
+/* Icône cadenas */
+.session-lock-icon {
+  font-size: 0.72rem;
+  flex-shrink: 0;
+  display: none;
+}
+.session-btn.locked .session-lock-icon  { display: inline; }
+.session-btn.locked .session-status-icon { display: none; }
+
+/* ============================================================
+   PAGE D'ACCUEIL (homepage)
+   ============================================================ */
+.welcome-screen {
+  /* Override du centrage vertical pour la homepage enrichie */
+  justify-content: flex-start;
+  align-items: stretch;
+  text-align: left;
+  min-height: auto;
+  gap: 0;
+  padding-bottom: 48px;
+}
+
+/* Hero block */
+.home-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 40px;
+  padding: 40px 0 36px;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+}
+
+.home-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 14px;
+  background: var(--gradient);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 99px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Titre reprend welcome-title mais aligné à gauche */
+.home-hero .welcome-title {
+  font-size: 2.4rem;
+  text-align: left;
+  max-width: 600px;
+}
+
+.home-hero .welcome-subtitle {
+  text-align: left;
+  max-width: 560px;
+  font-size: 0.97rem;
+}
+
+/* Cartes */
+.home-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.home-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 24px 22px;
+  box-shadow: var(--shadow-sm);
+  border-top: 3px solid transparent;
+  border-image: var(--gradient) 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+.home-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
+
+.home-card-icon { font-size: 1.6rem; }
+
+.home-card-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.home-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+}
+.home-card-list li {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  padding-left: 14px;
+  position: relative;
+}
+.home-card-list li::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .home-cards { grid-template-columns: 1fr; }
+  .home-hero .welcome-title { font-size: 1.8rem; }
+}
+
+@media (max-width: 768px) {
+  .home-hero { padding: 24px 0 28px; }
+}

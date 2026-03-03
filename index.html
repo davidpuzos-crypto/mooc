@@ -11,6 +11,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Canvas Confetti (gamification) -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
 
@@ -45,6 +48,14 @@
         </div>
       </div>
 
+      <!-- Bouton Accueil -->
+      <div class="sidebar-home-wrapper">
+        <button id="home-btn" class="sidebar-home-btn">
+          <span class="home-btn-icon">🏠</span>
+          <span>Accueil</span>
+        </button>
+      </div>
+
       <!-- Navigation : Modules & Séances (accordéon) -->
       <nav id="course-nav" class="course-nav" aria-label="Plan de cours">
         <!-- Généré dynamiquement par app.js -->
@@ -68,15 +79,57 @@
       <!-- Zone d'affichage du contenu de la séance -->
       <div id="lesson-view" class="lesson-view">
 
-        <!-- Écran d'accueil par défaut -->
+        <!-- Page d'accueil -->
         <div id="welcome-screen" class="welcome-screen">
-          <div class="welcome-icon">🎓</div>
-          <h1 class="welcome-title">Bienvenue sur Tisselia</h1>
-          <p class="welcome-subtitle">
-            Votre plateforme de formation <strong>Intelligence Artificielle &amp; Cybersécurité</strong>.<br>
-            Sélectionnez une séance dans le menu de gauche pour commencer.
-          </p>
-          <button class="btn-primary glass-btn" id="start-btn">Commencer la formation →</button>
+
+          <!-- Hero -->
+          <div class="home-hero">
+            <span class="home-badge">Formation certifiante</span>
+            <h1 class="welcome-title">Formation IA &amp; Cybersécurité</h1>
+            <p class="welcome-subtitle">
+              Découvrez les outils d'Intelligence Artificielle les plus puissants du moment et apprenez à les utiliser pour booster votre créativité, votre productivité et vos projets professionnels.
+            </p>
+            <button class="btn-primary" id="start-btn">Reprendre ma formation →</button>
+          </div>
+
+          <!-- Cartes d'information -->
+          <div class="home-cards">
+
+            <div class="home-card">
+              <div class="home-card-icon">🎯</div>
+              <h3 class="home-card-title">Objectifs</h3>
+              <ul class="home-card-list">
+                <li>Maîtriser les outils IA génératifs (texte, image, vidéo)</li>
+                <li>Comprendre les enjeux de la cybersécurité à l'ère de l'IA</li>
+                <li>Créer des contenus professionnels avec l'IA</li>
+                <li>Concevoir et présenter votre projet IA de A à Z</li>
+              </ul>
+            </div>
+
+            <div class="home-card">
+              <div class="home-card-icon">🗺️</div>
+              <h3 class="home-card-title">Fonctionnement</h3>
+              <ul class="home-card-list">
+                <li>12 séances à débloquer dans l'ordre, à votre rythme</li>
+                <li>Chaque séance contient une vidéo, un cours et un quiz</li>
+                <li>Validez le quiz puis cliquez "✅ Terminé" pour progresser</li>
+                <li>Votre avancée est sauvegardée automatiquement</li>
+              </ul>
+            </div>
+
+            <div class="home-card">
+              <div class="home-card-icon">📅</div>
+              <h3 class="home-card-title">Programme</h3>
+              <ul class="home-card-list">
+                <li><strong>Module 1 :</strong> Découvrir &amp; créer avec l'IA (S1–S4)</li>
+                <li><strong>Module 2 :</strong> Visuels &amp; vidéo avec l'IA (S5–S8)</li>
+                <li><strong>Module 3 :</strong> Rédiger &amp; traduire (S9–S10)</li>
+                <li><strong>Module 4 :</strong> Concrétiser son projet (S11–S12)</li>
+              </ul>
+            </div>
+
+          </div><!-- /home-cards -->
+
         </div>
 
         <!-- Contenu injecté dynamiquement -->
