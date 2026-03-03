@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tisselia — Plateforme de formation IA & Cybersécurité</title>
+
+  <!-- Google Fonts : Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== OVERLAY MOBILE (fond sombre quand sidebar ouverte) ===== -->
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+  <!-- ===== WRAPPER GLOBAL ===== -->
+  <div id="app-wrapper" class="app-wrapper">
+
+    <!-- ======================================================
+         SIDEBAR GAUCHE
+    ====================================================== -->
+    <aside id="sidebar" class="sidebar">
+
+      <!-- Logo Tisselia -->
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">✦</span>
+          <span class="logo-text">Tisselia</span>
+        </div>
+        <button id="sidebar-close-btn" class="sidebar-close-btn" aria-label="Fermer le menu">✕</button>
+      </div>
+
+      <!-- Jauge de progression globale -->
+      <div class="progress-container">
+        <div class="progress-label">
+          <span>Progression globale</span>
+          <span id="progress-percent">0%</span>
+        </div>
+        <div class="progress-bar-track">
+          <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Navigation : Modules & Séances (accordéon) -->
+      <nav id="course-nav" class="course-nav" aria-label="Plan de cours">
+        <!-- Généré dynamiquement par app.js -->
+      </nav>
+
+    </aside><!-- /sidebar -->
+
+    <!-- ======================================================
+         ZONE PRINCIPALE
+    ====================================================== -->
+    <main id="main-content" class="main-content">
+
+      <!-- Header top (mobile : bouton hamburger) -->
+      <header class="main-header">
+        <button id="hamburger-btn" class="hamburger-btn" aria-label="Ouvrir le menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="main-header-title" id="main-header-title">Intelligence Artificielle &amp; Cybersécurité</div>
+      </header>
+
+      <!-- Zone d'affichage du contenu de la séance -->
+      <div id="lesson-view" class="lesson-view">
+
+        <!-- Écran d'accueil par défaut -->
+        <div id="welcome-screen" class="welcome-screen">
+          <div class="welcome-icon">🎓</div>
+          <h1 class="welcome-title">Bienvenue sur Tisselia</h1>
+          <p class="welcome-subtitle">
+            Votre plateforme de formation <strong>Intelligence Artificielle &amp; Cybersécurité</strong>.<br>
+            Sélectionnez une séance dans le menu de gauche pour commencer.
+          </p>
+          <button class="btn-primary glass-btn" id="start-btn">Commencer la formation →</button>
+        </div>
+
+        <!-- Contenu injecté dynamiquement -->
+        <div id="lesson-content" class="lesson-content hidden"></div>
+
+      </div><!-- /lesson-view -->
+
+    </main><!-- /main-content -->
+
+  </div><!-- /app-wrapper -->
+
+  <!-- Scripts (data.js avant app.js) -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
