@@ -40,11 +40,16 @@ const db   = firebase.firestore();
    2. ÉTAT DE L'APPLICATION
    ============================================================ */
 
+/** Email de l'administrateur — auto-promu à la connexion */
+const ADMIN_EMAIL = 'davidpuzos@tisselia.com';
+
 let currentUser       = null;   // firebase.auth().currentUser
 let userDoc           = null;   // données Firestore : { role, status, maxSessionUnlocked, completedSessions }
-let unsubscribeDoc    = null;   // cleanup du listener Firestore
+let unsubscribeDoc    = null;   // cleanup du listener Firestore (document utilisateur courant)
+let unsubscribeUsers  = null;   // cleanup du listener Firestore (collection users — admin seulement)
 let currentSessionId  = null;   // ID de la séance actuellement affichée
 let completedSessions = new Set(); // miroir local de userDoc.completedSessions
+let adminPanelActive  = false;  // true quand le tableau de bord admin est affiché
 
 /* ============================================================
    3. RÉFÉRENCES DOM
@@ -76,6 +81,11 @@ const sidebarFooter      = document.getElementById('sidebar-footer');
 const userEmailDisplay   = document.getElementById('user-email-display');
 const signoutBtn         = document.getElementById('signout-btn');
 const homeBtn            = document.getElementById('home-btn');
+const sidebarAdminWrapper = document.getElementById('sidebar-admin-wrapper');
+const adminPanelBtn      = document.getElementById('admin-panel-btn');
+const adminPanel         = document.getElementById('admin-panel');
+const adminStats         = document.getElementById('admin-stats');
+const usersTableWrapper  = document.getElementById('users-table-wrapper');
 const mainHeaderTitle    = document.getElementById('main-header-title');
 const hamburgerBtn       = document.getElementById('hamburger-btn');
 const sidebar            = document.getElementById('sidebar');
@@ -196,8 +206,12 @@ auth.onAuthStateChanged((user) => {
     userDoc            = null;
     completedSessions  = new Set();
     currentSessionId   = null;
-    if (unsubscribeDoc) { unsubscribeDoc(); unsubscribeDoc = null; }
+    adminPanelActive   = false;
+    if (unsubscribeDoc)   { unsubscribeDoc();   unsubscribeDoc   = null; }
+    if (unsubscribeUsers) { unsubscribeUsers(); unsubscribeUsers = null; }
     sidebarFooter.classList.add('hidden');
+    sidebarAdminWrapper.classList.add('hidden');
+    adminPanel.classList.add('hidden');
     hidePlatform();
     showAuthOverlay();
   }
@@ -230,6 +244,18 @@ function startUserDocListener(uid) {
     userDoc = snap.data();
     completedSessions = new Set(userDoc.completedSessions || []);
 
+    /* Auto-promotion admin si l'email correspond */
+    if (currentUser.email === ADMIN_EMAIL &&
+        (userDoc.role !== 'admin' || userDoc.status !== 'approved')) {
+      db.collection('users').doc(uid).update({ role: 'admin', status: 'approved' });
+      return; /* le snapshot suivant aura les bonnes valeurs */
+    }
+
+    /* Afficher / masquer le bouton "Panel Admin" */
+    const isAdmin = userDoc.role === 'admin';
+    sidebarAdminWrapper.classList.toggle('hidden', !isAdmin);
+    if (isAdmin) startAdminUsersListener();
+
     if (userDoc.status === 'pending') {
       showPendingScreen();
     } else {
@@ -257,7 +283,8 @@ function showPendingScreen() {
 /** Affiche la plateforme complète (status: approved). */
 function showPlatform() {
   pendingScreen.classList.add('hidden');
-  lessonView.classList.remove('hidden');
+  /* Ne pas interférer si le tableau de bord admin est actif */
+  if (!adminPanelActive) lessonView.classList.remove('hidden');
   /* Afficher les éléments de cours dans la sidebar */
   progressContainer.classList.remove('hidden');
   sidebarHomeWrapper.classList.remove('hidden');
@@ -277,6 +304,8 @@ function showPlatform() {
 
 /** Réinitialise l'affichage lors de la déconnexion. */
 function hidePlatform() {
+  adminPanelActive = false;
+  adminPanel.classList.add('hidden');
   pendingScreen.classList.add('hidden');
   lessonView.classList.remove('hidden');
   lessonContent.classList.add('hidden');
@@ -471,6 +500,8 @@ function nextSession(sessionId) {
 function loadSession(sessionId) {
   const found = findSession(sessionId);
   if (!found) return;
+
+  hideAdminPanel(); /* ferme le panel admin si actif */
 
   const { module, session } = found;
   currentSessionId = sessionId;
@@ -712,6 +743,7 @@ async function markSessionComplete(sessionId, completeBtn, nextBtn) {
    ============================================================ */
 
 function showHomePage() {
+  hideAdminPanel(); /* ferme le panel admin si actif */
   currentSessionId = null;
   welcomeScreen.classList.remove('hidden');
   lessonContent.classList.add('hidden');
@@ -720,7 +752,201 @@ function showHomePage() {
 }
 
 /* ============================================================
-   16. SIDEBAR MOBILE
+   16. ADMIN — Affichage du tableau de bord
+   ============================================================ */
+
+/** Ouvre le tableau de bord admin et masque le contenu de cours. */
+function showAdminPanel() {
+  adminPanelActive = true;
+  lessonView.classList.add('hidden');
+  pendingScreen.classList.add('hidden');
+  adminPanel.classList.remove('hidden');
+  adminPanelBtn.classList.add('active');
+  homeBtn.classList.remove('active');
+  mainHeaderTitle.textContent = 'Tableau de bord Admin';
+  closeSidebarMobile();
+}
+
+/** Ferme le tableau de bord admin (sans rien afficher d'autre). */
+function hideAdminPanel() {
+  if (!adminPanelActive) return;
+  adminPanelActive = false;
+  adminPanel.classList.add('hidden');
+  adminPanelBtn.classList.remove('active');
+  lessonView.classList.remove('hidden');
+}
+
+/* ============================================================
+   17. ADMIN — Listener temps-réel sur la collection users
+   Déclenché automatiquement si l'utilisateur connecté est admin.
+   ============================================================ */
+
+/**
+ * S'abonne à toutes les modifications de la collection users.
+ * L'appel est idempotent : un seul listener est actif à la fois.
+ */
+function startAdminUsersListener() {
+  if (unsubscribeUsers) return; /* listener déjà actif */
+
+  unsubscribeUsers = db.collection('users')
+    .orderBy('createdAt', 'asc')
+    .onSnapshot(snapshot => {
+      const users = [];
+      snapshot.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
+      renderAdminStats(users);
+      renderUsersTable(users);
+    }, err => {
+      console.error('Erreur listener users (admin) :', err);
+    });
+}
+
+/* ============================================================
+   18. ADMIN — Statistiques globales
+   ============================================================ */
+
+function renderAdminStats(users) {
+  const students    = users.filter(u => u.role !== 'admin');
+  const approved    = students.filter(u => u.status === 'approved').length;
+  const pending     = students.filter(u => u.status === 'pending').length;
+  const total       = totalSessions();
+  const avgDone     = students.length > 0
+    ? Math.round(
+        students.reduce((sum, u) => sum + (u.completedSessions?.length || 0), 0)
+        / students.length
+      )
+    : 0;
+
+  adminStats.innerHTML = `
+    <div class="admin-stat-card">
+      <span class="stat-value">${students.length}</span>
+      <span class="stat-label">Élèves inscrits</span>
+    </div>
+    <div class="admin-stat-card approved">
+      <span class="stat-value">${approved}</span>
+      <span class="stat-label">Approuvés</span>
+    </div>
+    <div class="admin-stat-card pending">
+      <span class="stat-value">${pending}</span>
+      <span class="stat-label">En attente</span>
+    </div>
+    <div class="admin-stat-card">
+      <span class="stat-value">${avgDone}<span style="font-size:1rem;font-weight:400;color:var(--text-secondary)">/${total}</span></span>
+      <span class="stat-label">Séances moy.</span>
+    </div>
+  `;
+}
+
+/* ============================================================
+   19. ADMIN — Tableau des élèves
+   ============================================================ */
+
+function renderUsersTable(users) {
+  const students = users.filter(u => u.role !== 'admin');
+  const total    = totalSessions();
+
+  if (!students.length) {
+    usersTableWrapper.innerHTML = `
+      <div class="admin-empty">
+        <span>📭</span>
+        <p>Aucun élève inscrit pour l'instant.</p>
+      </div>`;
+    return;
+  }
+
+  /* Génère les <option> pour le select maxSessionUnlocked */
+  function sessionOptions(maxUnlocked) {
+    let opts = `<option value="0" ${maxUnlocked === 0 ? 'selected' : ''}>🔒 Aucun accès</option>`;
+    for (let n = 1; n <= total; n++) {
+      opts += `<option value="${n}" ${maxUnlocked === n ? 'selected' : ''}>Séance ${n}</option>`;
+    }
+    return opts;
+  }
+
+  let html = `
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Élève</th>
+          <th>Statut</th>
+          <th>Accès (jusqu'à)</th>
+          <th>Progression</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  students.forEach(user => {
+    const done        = (user.completedSessions || []).length;
+    const isApproved  = user.status === 'approved';
+    const maxUnlocked = user.maxSessionUnlocked || 0;
+    const pct         = total > 0 ? Math.round((done / total) * 100) : 0;
+
+    html += `
+      <tr>
+        <td class="user-email-cell">
+          <span class="user-avatar-sm">👤</span>
+          <span class="user-email-text">${user.email}</span>
+        </td>
+        <td>
+          <button class="status-toggle-btn ${isApproved ? 'approved' : 'pending'}"
+            data-uid="${user.id}" data-status="${user.status}">
+            ${isApproved ? '✅ Approuvé' : '⏳ En attente'}
+          </button>
+        </td>
+        <td>
+          <select class="session-unlock-select" data-uid="${user.id}">
+            ${sessionOptions(maxUnlocked)}
+          </select>
+        </td>
+        <td>
+          <div class="progress-cell">
+            <span class="progress-fraction">${done} / ${total}</span>
+            <div class="mini-bar-track">
+              <div class="mini-bar-fill" style="width:${pct}%"></div>
+            </div>
+            <span class="progress-pct">${pct}%</span>
+          </div>
+        </td>
+      </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  usersTableWrapper.innerHTML = html;
+
+  /* ---- Listeners sur les contrôles générés ---- */
+
+  /* Toggle statut (pending ↔ approved) */
+  usersTableWrapper.querySelectorAll('.status-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const uid       = btn.dataset.uid;
+      const newStatus = btn.dataset.status === 'approved' ? 'pending' : 'approved';
+      btn.disabled = true;
+      try {
+        await db.collection('users').doc(uid).update({ status: newStatus });
+        /* Le onSnapshot met à jour le tableau automatiquement */
+      } catch (err) {
+        console.error('Erreur mise à jour statut :', err);
+        btn.disabled = false;
+      }
+    });
+  });
+
+  /* Modifier maxSessionUnlocked */
+  usersTableWrapper.querySelectorAll('.session-unlock-select').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const uid   = sel.dataset.uid;
+      const value = parseInt(sel.value, 10);
+      try {
+        await db.collection('users').doc(uid).update({ maxSessionUnlocked: value });
+        /* Le onSnapshot de l'élève mettra à jour sa sidebar en temps réel */
+      } catch (err) {
+        console.error('Erreur mise à jour maxSessionUnlocked :', err);
+      }
+    });
+  });
+}
+
+/* ============================================================
+   20. SIDEBAR MOBILE
    ============================================================ */
 
 function openSidebarMobile() {
@@ -742,4 +968,14 @@ sidebarOverlay.addEventListener('click', closeSidebarMobile);
 homeBtn.addEventListener('click', () => {
   closeSidebarMobile();
   showHomePage();
+});
+
+adminPanelBtn.addEventListener('click', () => {
+  if (adminPanelActive) {
+    /* Retour au cours si le panel est déjà ouvert */
+    hideAdminPanel();
+    showHomePage();
+  } else {
+    showAdminPanel();
+  }
 });
