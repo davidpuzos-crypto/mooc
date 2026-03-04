@@ -14,8 +14,55 @@
 
   <!-- Canvas Confetti (gamification) -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Firebase SDKs — mode compat (globaux : firebase.auth(), firebase.firestore()) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
+
+  <!-- ======================================================
+       AUTH OVERLAY — masque tout le contenu tant que non connecté
+  ====================================================== -->
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-card">
+
+      <!-- Logo -->
+      <div class="auth-logo">
+        <span class="auth-logo-icon">✦</span>
+        <span class="auth-logo-text">Tisselia</span>
+      </div>
+
+      <h2 class="auth-title" id="auth-title">Se connecter</h2>
+      <p class="auth-subtitle" id="auth-subtitle">Accédez à votre espace de formation</p>
+
+      <!-- Bandeau d'erreur -->
+      <div id="auth-error" class="auth-error hidden"></div>
+
+      <!-- Formulaire -->
+      <form id="auth-form" class="auth-form" novalidate>
+        <div class="auth-field">
+          <label for="auth-email">Adresse email</label>
+          <input type="email" id="auth-email" placeholder="vous@example.com" autocomplete="email" required />
+        </div>
+        <div class="auth-field">
+          <label for="auth-password">Mot de passe</label>
+          <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="btn-primary auth-submit-btn" id="auth-submit-btn">
+          Se connecter
+        </button>
+      </form>
+
+      <!-- Bascule Connexion ↔ Inscription -->
+      <p class="auth-toggle-text">
+        <span id="auth-toggle-label">Pas encore de compte ?</span>
+        <button id="auth-toggle-btn" class="auth-toggle-btn">S'inscrire</button>
+      </p>
+
+    </div>
+  </div>
 
   <!-- ===== OVERLAY MOBILE (fond sombre quand sidebar ouverte) ===== -->
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
@@ -37,8 +84,8 @@
         <button id="sidebar-close-btn" class="sidebar-close-btn" aria-label="Fermer le menu">✕</button>
       </div>
 
-      <!-- Jauge de progression globale -->
-      <div class="progress-container">
+      <!-- Jauge de progression (masquée si pending) -->
+      <div class="progress-container hidden" id="progress-container">
         <div class="progress-label">
           <span>Progression globale</span>
           <span id="progress-percent">0%</span>
@@ -48,18 +95,25 @@
         </div>
       </div>
 
-      <!-- Bouton Accueil -->
-      <div class="sidebar-home-wrapper">
+      <!-- Bouton Accueil (masqué si pending) -->
+      <div class="sidebar-home-wrapper hidden" id="sidebar-home-wrapper">
         <button id="home-btn" class="sidebar-home-btn">
           <span class="home-btn-icon">🏠</span>
           <span>Accueil</span>
         </button>
       </div>
 
-      <!-- Navigation : Modules & Séances (accordéon) -->
-      <nav id="course-nav" class="course-nav" aria-label="Plan de cours">
-        <!-- Généré dynamiquement par app.js -->
-      </nav>
+      <!-- Navigation modules/séances (masquée si pending) -->
+      <nav id="course-nav" class="course-nav hidden" aria-label="Plan de cours"></nav>
+
+      <!-- Pied de sidebar : utilisateur connecté + déconnexion -->
+      <div class="sidebar-footer hidden" id="sidebar-footer">
+        <div class="user-info">
+          <span class="user-avatar">👤</span>
+          <span id="user-email-display" class="user-email-display"></span>
+        </div>
+        <button id="signout-btn" class="signout-btn">Déconnexion</button>
+      </div>
 
     </aside><!-- /sidebar -->
 
@@ -76,25 +130,33 @@
         <div class="main-header-title" id="main-header-title">Intelligence Artificielle &amp; Cybersécurité</div>
       </header>
 
-      <!-- Zone d'affichage du contenu de la séance -->
+      <!-- Écran "inscription en attente" (status: pending) -->
+      <div id="pending-screen" class="pending-screen hidden">
+        <div class="pending-icon">⏳</div>
+        <h2 class="pending-title">Inscription en attente de validation</h2>
+        <p class="pending-text">
+          Votre inscription est en attente de validation par l'équipe Tisselia.<br>
+          Vous serez notifié dès que votre accès sera activé.
+        </p>
+      </div>
+
+      <!-- Zone d'affichage du contenu (status: approved) -->
       <div id="lesson-view" class="lesson-view">
 
         <!-- Page d'accueil -->
         <div id="welcome-screen" class="welcome-screen">
-
-          <!-- Hero -->
           <div class="home-hero">
             <span class="home-badge">Formation certifiante</span>
             <h1 class="welcome-title">Formation IA &amp; Cybersécurité</h1>
             <p class="welcome-subtitle">
-              Découvrez les outils d'Intelligence Artificielle les plus puissants du moment et apprenez à les utiliser pour booster votre créativité, votre productivité et vos projets professionnels.
+              Découvrez les outils d'Intelligence Artificielle les plus puissants du moment et
+              apprenez à les utiliser pour booster votre créativité, votre productivité et vos
+              projets professionnels.
             </p>
             <button class="btn-primary" id="start-btn">Reprendre ma formation →</button>
           </div>
 
-          <!-- Cartes d'information -->
           <div class="home-cards">
-
             <div class="home-card">
               <div class="home-card-icon">🎯</div>
               <h3 class="home-card-title">Objectifs</h3>
@@ -105,18 +167,16 @@
                 <li>Concevoir et présenter votre projet IA de A à Z</li>
               </ul>
             </div>
-
             <div class="home-card">
               <div class="home-card-icon">🗺️</div>
               <h3 class="home-card-title">Fonctionnement</h3>
               <ul class="home-card-list">
-                <li>12 séances à débloquer dans l'ordre, à votre rythme</li>
+                <li>Séances débloquées progressivement par votre formateur</li>
                 <li>Chaque séance contient une vidéo, un cours et un quiz</li>
                 <li>Validez le quiz puis cliquez "✅ Terminé" pour progresser</li>
                 <li>Votre avancée est sauvegardée automatiquement</li>
               </ul>
             </div>
-
             <div class="home-card">
               <div class="home-card-icon">📅</div>
               <h3 class="home-card-title">Programme</h3>
@@ -127,12 +187,10 @@
                 <li><strong>Module 4 :</strong> Concrétiser son projet (S11–S12)</li>
               </ul>
             </div>
+          </div>
+        </div><!-- /welcome-screen -->
 
-          </div><!-- /home-cards -->
-
-        </div>
-
-        <!-- Contenu injecté dynamiquement -->
+        <!-- Contenu injecté dynamiquement par app.js -->
         <div id="lesson-content" class="lesson-content hidden"></div>
 
       </div><!-- /lesson-view -->
@@ -141,7 +199,7 @@
 
   </div><!-- /app-wrapper -->
 
-  <!-- Scripts (data.js avant app.js) -->
+  <!-- Scripts : data.js doit être chargé avant app.js -->
   <script src="data.js"></script>
   <script src="app.js"></script>
 </body>

@@ -1,144 +1,365 @@
 /**
  * ============================================================
  *  TISSELIA — Moteur de l'application (app.js)
+ *  v3 — Firebase Auth + Firestore
  *
  *  Responsabilités :
- *   1. Lire courseData (data.js) et construire la navigation
- *   2. Afficher le contenu d'une séance au clic
- *   3. Gérer le quiz (validation des réponses)
- *   4. Marquer les séances comme "terminées" (localStorage)
- *   5. Calculer et afficher la jauge de progression globale
- *   6. Gérer la sidebar mobile (hamburger / overlay)
- *   7. Parcours linéaire : verrouillage des séances non débloquées
- *   8. Gamification : confettis au déblocage d'une séance
- *   9. Page d'accueil dédiée avec CTA "Reprendre ma formation"
+ *   1.  Firebase : initialisation Auth + Firestore
+ *   2.  Auth UI : overlay connexion / inscription
+ *   3.  Auth logique : signIn, signUp, signOut
+ *   4.  Cycle de vie auth : onAuthStateChanged
+ *   5.  Firestore listener temps-réel sur le document utilisateur
+ *   6.  États de l'interface : pending / approved / déconnecté
+ *   7.  Double verrouillage : admin (maxSessionUnlocked) + progression
+ *   8.  Affichage des séances + quiz
+ *   9.  Progression sauvegardée dans Firestore (arrayUnion)
+ *   10. Gamification : confettis
+ *   11. Sidebar mobile responsive
  * ============================================================
  */
 
 /* ============================================================
-   1. ÉTAT DE L'APPLICATION
+   1. FIREBASE — Configuration & Initialisation
    ============================================================ */
 
-/** Clé localStorage pour sauvegarder la progression */
-const LS_KEY = 'tisselia_progress';
+const firebaseConfig = {
+  apiKey:            'AIzaSyDTDjbO2jrR7rIOp730VOdcNDFV9WeEK2c',
+  authDomain:        'mooc-940cd.firebaseapp.com',
+  projectId:         'mooc-940cd',
+  storageBucket:     'mooc-940cd.firebasestorage.app',
+  messagingSenderId: '435689976808',
+  appId:             '1:435689976808:web:796331c03112851992ea5d',
+  measurementId:     'G-K9VCK3KNKR'
+};
 
-/**
- * Charge la progression depuis localStorage.
- * @returns {Set<string>} Ensemble des IDs de séances terminées.
- */
-function loadProgress() {
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+/* ============================================================
+   2. ÉTAT DE L'APPLICATION
+   ============================================================ */
+
+let currentUser       = null;   // firebase.auth().currentUser
+let userDoc           = null;   // données Firestore : { role, status, maxSessionUnlocked, completedSessions }
+let unsubscribeDoc    = null;   // cleanup du listener Firestore
+let currentSessionId  = null;   // ID de la séance actuellement affichée
+let completedSessions = new Set(); // miroir local de userDoc.completedSessions
+
+/* ============================================================
+   3. RÉFÉRENCES DOM
+   ============================================================ */
+
+/* Auth */
+const authOverlay       = document.getElementById('auth-overlay');
+const authForm          = document.getElementById('auth-form');
+const authEmailInput    = document.getElementById('auth-email');
+const authPasswordInput = document.getElementById('auth-password');
+const authSubmitBtn     = document.getElementById('auth-submit-btn');
+const authTitle         = document.getElementById('auth-title');
+const authSubtitle      = document.getElementById('auth-subtitle');
+const authError         = document.getElementById('auth-error');
+const authToggleBtn     = document.getElementById('auth-toggle-btn');
+const authToggleLabel   = document.getElementById('auth-toggle-label');
+
+/* Plateforme */
+const pendingScreen      = document.getElementById('pending-screen');
+const lessonView         = document.getElementById('lesson-view');
+const lessonContent      = document.getElementById('lesson-content');
+const welcomeScreen      = document.getElementById('welcome-screen');
+const progressContainer  = document.getElementById('progress-container');
+const progressBarFill    = document.getElementById('progress-bar-fill');
+const progressPercent    = document.getElementById('progress-percent');
+const sidebarHomeWrapper = document.getElementById('sidebar-home-wrapper');
+const courseNav          = document.getElementById('course-nav');
+const sidebarFooter      = document.getElementById('sidebar-footer');
+const userEmailDisplay   = document.getElementById('user-email-display');
+const signoutBtn         = document.getElementById('signout-btn');
+const homeBtn            = document.getElementById('home-btn');
+const mainHeaderTitle    = document.getElementById('main-header-title');
+const hamburgerBtn       = document.getElementById('hamburger-btn');
+const sidebar            = document.getElementById('sidebar');
+const sidebarOverlay     = document.getElementById('sidebar-overlay');
+const sidebarCloseBtn    = document.getElementById('sidebar-close-btn');
+
+/* ============================================================
+   4. AUTH UI — Helpers d'interface
+   ============================================================ */
+
+let isSignupMode = false;
+
+function showAuthOverlay() { authOverlay.classList.remove('hidden'); }
+function hideAuthOverlay() { authOverlay.classList.add('hidden'); }
+
+/** Bascule entre mode "Se connecter" et "S'inscrire". */
+function setAuthMode(signup) {
+  isSignupMode = signup;
+  if (signup) {
+    authTitle.textContent       = "S'inscrire";
+    authSubtitle.textContent    = 'Créez votre compte gratuitement';
+    authSubmitBtn.textContent   = 'Créer mon compte';
+    authToggleLabel.textContent = 'Déjà un compte ?';
+    authToggleBtn.textContent   = 'Se connecter';
+  } else {
+    authTitle.textContent       = 'Se connecter';
+    authSubtitle.textContent    = 'Accédez à votre espace de formation';
+    authSubmitBtn.textContent   = 'Se connecter';
+    authToggleLabel.textContent = 'Pas encore de compte ?';
+    authToggleBtn.textContent   = "S'inscrire";
+  }
+  hideAuthError();
+}
+
+function showAuthError(msg) {
+  authError.textContent = msg;
+  authError.classList.remove('hidden');
+}
+function hideAuthError() {
+  authError.classList.add('hidden');
+  authError.textContent = '';
+}
+
+/** Traduit les codes d'erreur Firebase en français. */
+function translateFirebaseError(code) {
+  const map = {
+    'auth/user-not-found':      'Aucun compte trouvé avec cet email.',
+    'auth/wrong-password':      'Mot de passe incorrect.',
+    'auth/email-already-in-use':'Cet email est déjà utilisé par un autre compte.',
+    'auth/weak-password':       'Le mot de passe doit contenir au moins 6 caractères.',
+    'auth/invalid-email':       'Adresse email invalide.',
+    'auth/invalid-credential':  'Identifiants incorrects. Vérifiez votre email et mot de passe.',
+    'auth/too-many-requests':   'Trop de tentatives. Réessayez dans quelques minutes.',
+  };
+  return map[code] || 'Une erreur est survenue. Veuillez réessayer.';
+}
+
+/* ============================================================
+   5. AUTH LOGIQUE — Connexion, Inscription, Déconnexion
+   ============================================================ */
+
+authForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  hideAuthError();
+  authSubmitBtn.disabled = true;
+  authSubmitBtn.textContent = '…';
+
+  const email    = authEmailInput.value.trim();
+  const password = authPasswordInput.value;
+
   try {
-    const raw = localStorage.getItem(LS_KEY);
-    return raw ? new Set(JSON.parse(raw)) : new Set();
-  } catch {
-    return new Set();
+    if (isSignupMode) {
+      /* --- Inscription --- */
+      const cred = await auth.createUserWithEmailAndPassword(email, password);
+
+      /* Créer le document utilisateur dans Firestore */
+      await db.collection('users').doc(cred.user.uid).set({
+        email:              cred.user.email,
+        role:               'student',
+        status:             'pending',
+        maxSessionUnlocked: 0,
+        completedSessions:  [],
+        createdAt:          firebase.firestore.FieldValue.serverTimestamp()
+      });
+      /* onAuthStateChanged + startUserDocListener prennent le relais */
+
+    } else {
+      /* --- Connexion --- */
+      await auth.signInWithEmailAndPassword(email, password);
+      /* onAuthStateChanged prend le relais */
+    }
+  } catch (err) {
+    showAuthError(translateFirebaseError(err.code));
+    authSubmitBtn.disabled = false;
+    authSubmitBtn.textContent = isSignupMode ? 'Créer mon compte' : 'Se connecter';
+  }
+});
+
+authToggleBtn.addEventListener('click', () => setAuthMode(!isSignupMode));
+
+signoutBtn.addEventListener('click', () => auth.signOut());
+
+/* ============================================================
+   6. CYCLE DE VIE AUTH — onAuthStateChanged
+   ============================================================ */
+
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    /* Utilisateur connecté */
+    currentUser = user;
+    hideAuthOverlay();
+    userEmailDisplay.textContent = user.email;
+    sidebarFooter.classList.remove('hidden');
+    startUserDocListener(user.uid);
+  } else {
+    /* Utilisateur déconnecté */
+    currentUser        = null;
+    userDoc            = null;
+    completedSessions  = new Set();
+    currentSessionId   = null;
+    if (unsubscribeDoc) { unsubscribeDoc(); unsubscribeDoc = null; }
+    sidebarFooter.classList.add('hidden');
+    hidePlatform();
+    showAuthOverlay();
+  }
+});
+
+/* ============================================================
+   7. FIRESTORE — Listener temps-réel sur le document utilisateur
+   Permet le "drip content" : si l'admin change maxSessionUnlocked,
+   la sidebar se met à jour automatiquement sans rechargement.
+   ============================================================ */
+
+function startUserDocListener(uid) {
+  if (unsubscribeDoc) unsubscribeDoc();
+
+  unsubscribeDoc = db.collection('users').doc(uid).onSnapshot((snap) => {
+
+    if (!snap.exists) {
+      /* Document absent (rare) : on le crée avec statut pending */
+      db.collection('users').doc(uid).set({
+        email:              currentUser.email,
+        role:               'student',
+        status:             'pending',
+        maxSessionUnlocked: 0,
+        completedSessions:  [],
+        createdAt:          firebase.firestore.FieldValue.serverTimestamp()
+      });
+      return;
+    }
+
+    userDoc = snap.data();
+    completedSessions = new Set(userDoc.completedSessions || []);
+
+    if (userDoc.status === 'pending') {
+      showPendingScreen();
+    } else {
+      showPlatform();
+    }
+  }, (err) => {
+    console.error('Erreur listener Firestore :', err);
+  });
+}
+
+/* ============================================================
+   8. ÉTATS DE L'INTERFACE
+   ============================================================ */
+
+/** Affiche l'écran d'attente (status: pending). */
+function showPendingScreen() {
+  pendingScreen.classList.remove('hidden');
+  lessonView.classList.add('hidden');
+  /* Masquer les éléments de cours dans la sidebar */
+  progressContainer.classList.add('hidden');
+  sidebarHomeWrapper.classList.add('hidden');
+  courseNav.classList.add('hidden');
+}
+
+/** Affiche la plateforme complète (status: approved). */
+function showPlatform() {
+  pendingScreen.classList.add('hidden');
+  lessonView.classList.remove('hidden');
+  /* Afficher les éléments de cours dans la sidebar */
+  progressContainer.classList.remove('hidden');
+  sidebarHomeWrapper.classList.remove('hidden');
+  courseNav.classList.remove('hidden');
+  /* Reconstruire la nav (reflète les nouvelles séances débloquées par l'admin) */
+  buildNav();
+  updateProgressBar();
+  /* (Ré)attacher le CTA de la homepage */
+  const startBtn = document.getElementById('start-btn');
+  if (startBtn) {
+    startBtn.onclick = () => {
+      const id = getResumeSessionId();
+      if (id) loadSession(id);
+    };
   }
 }
 
-/**
- * Sauvegarde la progression dans localStorage.
- * @param {Set<string>} completedSet
- */
-function saveProgress(completedSet) {
-  localStorage.setItem(LS_KEY, JSON.stringify([...completedSet]));
+/** Réinitialise l'affichage lors de la déconnexion. */
+function hidePlatform() {
+  pendingScreen.classList.add('hidden');
+  lessonView.classList.remove('hidden');
+  lessonContent.classList.add('hidden');
+  welcomeScreen.classList.remove('hidden');
+  progressContainer.classList.add('hidden');
+  sidebarHomeWrapper.classList.add('hidden');
+  courseNav.classList.add('hidden');
+  courseNav.innerHTML = '';
+  currentSessionId = null;
 }
 
-/** Séances terminées (Set d'IDs) */
-let completedSessions = loadProgress();
-
-/** ID de la séance actuellement affichée */
-let currentSessionId = null;
-
 /* ============================================================
-   2. RÉFÉRENCES DOM
-   ============================================================ */
-const courseNav         = document.getElementById('course-nav');
-const lessonContent     = document.getElementById('lesson-content');
-const welcomeScreen     = document.getElementById('welcome-screen');
-const progressBarFill   = document.getElementById('progress-bar-fill');
-const progressPercent   = document.getElementById('progress-percent');
-const mainHeaderTitle   = document.getElementById('main-header-title');
-const hamburgerBtn      = document.getElementById('hamburger-btn');
-const sidebar           = document.getElementById('sidebar');
-const sidebarOverlay    = document.getElementById('sidebar-overlay');
-const sidebarCloseBtn   = document.getElementById('sidebar-close-btn');
-const homeBtn           = document.getElementById('home-btn');
-
-/* ============================================================
-   3. PARCOURS LINÉAIRE — Helpers de verrouillage
+   9. DOUBLE VERROUILLAGE — Helpers
    ============================================================ */
 
-/** Liste plate de toutes les séances (tous modules) */
+/** Retourne la liste plate de toutes les séances. */
 function allSessionsFlat() {
   return courseData.modules.flatMap(m => m.sessions);
 }
 
 /**
- * Indique si une séance est débloquée.
- * Règle : la séance 0 est toujours débloquée ;
- *         la séance N est débloquée si la séance N-1 est terminée.
- * @param {string} sessionId
- * @returns {boolean}
+ * Une séance N (index 1-based) est débloquée si ET SEULEMENT SI :
+ *  1. L'admin a défini maxSessionUnlocked >= N
+ *  2. La séance N-1 est dans completedSessions (sauf pour la séance 1)
  */
 function isSessionUnlocked(sessionId) {
+  if (!userDoc || userDoc.status !== 'approved') return false;
+
   const all = allSessionsFlat();
   const idx = all.findIndex(s => s.id === sessionId);
-  if (idx <= 0) return true;
+  if (idx < 0) return false;
+
+  const sessionNum  = idx + 1; // 1-based
+  const maxUnlocked = userDoc.maxSessionUnlocked || 0;
+
+  /* Condition 1 : verrou admin */
+  if (maxUnlocked < sessionNum) return false;
+
+  /* Condition 2 : verrou progression (séance 1 n'a pas de prérequis) */
+  if (idx === 0) return true;
   return completedSessions.has(all[idx - 1].id);
 }
 
 /**
  * Retourne l'ID de la séance sur laquelle reprendre :
  * la première séance débloquée mais non terminée,
- * ou la dernière séance si tout est terminé.
- * @returns {string|null}
+ * ou la dernière séance débloquée si tout est terminé.
  */
 function getResumeSessionId() {
   const all = allSessionsFlat();
-  for (let i = 0; i < all.length; i++) {
-    const unlocked = i === 0 || completedSessions.has(all[i - 1].id);
-    if (unlocked && !completedSessions.has(all[i].id)) return all[i].id;
+  for (const s of all) {
+    if (isSessionUnlocked(s.id) && !completedSessions.has(s.id)) return s.id;
   }
-  return all[all.length - 1]?.id || null;
+  /* Tout terminé : revenir sur la dernière séance débloquée */
+  for (let i = all.length - 1; i >= 0; i--) {
+    if (isSessionUnlocked(all[i].id)) return all[i].id;
+  }
+  return all[0]?.id || null;
 }
 
 /* ============================================================
-   4. NAVIGATION — Construction de la sidebar
+   10. NAVIGATION — Construction de la sidebar
    ============================================================ */
 
-/**
- * Calcule le nombre total de séances dans courseData.
- * @returns {number}
- */
 function totalSessions() {
   return courseData.modules.reduce((sum, mod) => sum + mod.sessions.length, 0);
 }
 
-/**
- * Met à jour la jauge de progression et le pourcentage.
- */
 function updateProgressBar() {
   const total   = totalSessions();
   const done    = completedSessions.size;
   const percent = total > 0 ? Math.round((done / total) * 100) : 0;
-
   progressBarFill.style.width = percent + '%';
   progressPercent.textContent  = percent + '%';
 }
 
-/**
- * Crée et injecte l'accordéon de navigation dans la sidebar.
- */
 function buildNav() {
   courseNav.innerHTML = '';
 
   courseData.modules.forEach((module, mIdx) => {
-
-    /* --- Conteneur du module --- */
     const moduleItem = document.createElement('div');
     moduleItem.className = 'module-item';
 
-    /* --- Bouton toggle du module --- */
     const toggleBtn = document.createElement('button');
     toggleBtn.className = 'module-toggle';
     toggleBtn.setAttribute('aria-expanded', mIdx === 0 ? 'true' : 'false');
@@ -148,13 +369,12 @@ function buildNav() {
       <span class="module-chevron">▼</span>
     `;
 
-    /* --- Liste des séances --- */
     const sessionsList = document.createElement('ul');
     sessionsList.className = 'sessions-list' + (mIdx === 0 ? ' open' : '');
     if (mIdx === 0) toggleBtn.classList.add('open');
 
     module.sessions.forEach(session => {
-      const li = document.createElement('li');
+      const li          = document.createElement('li');
       const isCompleted = completedSessions.has(session.id);
       const unlocked    = isSessionUnlocked(session.id);
 
@@ -163,7 +383,7 @@ function buildNav() {
         + (isCompleted ? ' completed' : '')
         + (!unlocked   ? ' locked'    : '');
       btn.dataset.sessionId = session.id;
-      btn.disabled = !unlocked;
+      btn.disabled = !unlocked; /* attribut HTML + pointer-events: none via CSS */
       btn.innerHTML = `
         <span class="session-title-text">${session.title}</span>
         <span class="session-status-icon">✅</span>
@@ -181,10 +401,8 @@ function buildNav() {
       sessionsList.appendChild(li);
     });
 
-    /* --- Accordéon toggle --- */
     toggleBtn.addEventListener('click', () => {
       const isOpen = sessionsList.classList.contains('open');
-      /* Ferme tous les autres */
       document.querySelectorAll('.sessions-list.open').forEach(el => el.classList.remove('open'));
       document.querySelectorAll('.module-toggle.open').forEach(el => {
         el.classList.remove('open');
@@ -204,12 +422,12 @@ function buildNav() {
 }
 
 /**
- * Met à jour l'état visuel (active / completed / locked) des boutons de séance.
- * Appelée après chaque changement de progression pour refléter les déblocages.
+ * Met à jour les classes visuelles (active / completed / locked) sans
+ * reconstruire tout le DOM. Appelée après chaque changement de progression.
  */
 function refreshNavState() {
   document.querySelectorAll('.session-btn').forEach(btn => {
-    const sid      = btn.dataset.sessionId;
+    const sid       = btn.dataset.sessionId;
     const completed = completedSessions.has(sid);
     const unlocked  = isSessionUnlocked(sid);
 
@@ -218,7 +436,7 @@ function refreshNavState() {
     btn.classList.toggle('locked',    !unlocked);
     btn.disabled = !unlocked;
 
-    /* Ajouter l'écouteur de clic si la séance vient d'être débloquée */
+    /* Attacher l'écouteur de clic dès qu'une séance vient d'être débloquée */
     if (unlocked && !btn.dataset.listenerAttached) {
       btn.addEventListener('click', () => {
         closeSidebarMobile();
@@ -228,45 +446,28 @@ function refreshNavState() {
     }
   });
 
-  /* Mettre à jour l'état actif du bouton Accueil */
   homeBtn.classList.toggle('active', currentSessionId === null);
 }
 
 /* ============================================================
-   4. AFFICHAGE D'UNE SÉANCE
+   11. AFFICHAGE D'UNE SÉANCE
    ============================================================ */
 
-/**
- * Trouve un module et une session par l'ID de la session.
- * @param {string} sessionId
- * @returns {{ module, session, moduleIndex, sessionIndex } | null}
- */
 function findSession(sessionId) {
   for (let mIdx = 0; mIdx < courseData.modules.length; mIdx++) {
-    const mod = courseData.modules[mIdx];
+    const mod  = courseData.modules[mIdx];
     const sIdx = mod.sessions.findIndex(s => s.id === sessionId);
-    if (sIdx !== -1) {
-      return { module: mod, session: mod.sessions[sIdx], moduleIndex: mIdx, sessionIndex: sIdx };
-    }
+    if (sIdx !== -1) return { module: mod, session: mod.sessions[sIdx] };
   }
   return null;
 }
 
-/**
- * Retourne la session suivante (tous modules confondus), ou null si dernière.
- * @param {string} sessionId
- * @returns {object|null}
- */
 function nextSession(sessionId) {
-  const allSessions = courseData.modules.flatMap(m => m.sessions);
-  const idx = allSessions.findIndex(s => s.id === sessionId);
-  return idx !== -1 && idx + 1 < allSessions.length ? allSessions[idx + 1] : null;
+  const all = allSessionsFlat();
+  const idx = all.findIndex(s => s.id === sessionId);
+  return idx !== -1 && idx + 1 < all.length ? all[idx + 1] : null;
 }
 
-/**
- * Charge et affiche le contenu d'une séance.
- * @param {string} sessionId
- */
 function loadSession(sessionId) {
   const found = findSession(sessionId);
   if (!found) return;
@@ -274,47 +475,34 @@ function loadSession(sessionId) {
   const { module, session } = found;
   currentSessionId = sessionId;
 
-  /* Masquer l'écran de bienvenue, montrer le contenu */
   welcomeScreen.classList.add('hidden');
   lessonContent.classList.remove('hidden');
-
-  /* Mettre à jour le titre du header */
   mainHeaderTitle.textContent = session.title;
 
   /* Ouvrir l'accordéon du module courant */
   document.querySelectorAll('.module-toggle').forEach((btn, idx) => {
-    if (courseData.modules[idx] && courseData.modules[idx].id === module.id) {
+    if (courseData.modules[idx]?.id === module.id) {
       const list = btn.nextElementSibling;
       document.querySelectorAll('.sessions-list').forEach(l => l.classList.remove('open'));
-      document.querySelectorAll('.module-toggle').forEach(b => { b.classList.remove('open'); b.setAttribute('aria-expanded','false'); });
+      document.querySelectorAll('.module-toggle').forEach(b => {
+        b.classList.remove('open');
+        b.setAttribute('aria-expanded', 'false');
+      });
       list.classList.add('open');
       btn.classList.add('open');
       btn.setAttribute('aria-expanded', 'true');
     }
   });
 
-  /* Rafraîchir états actif / terminé */
   refreshNavState();
-
-  /* Construire le HTML de la séance */
   lessonContent.innerHTML = buildLessonHTML(module, session);
-
-  /* Attacher les événements du quiz et des boutons */
   initLessonEvents(session);
-
-  /* Remonter en haut de la page */
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/**
- * Construit le HTML complet d'une séance.
- * @param {object} module
- * @param {object} session
- * @returns {string}
- */
 function buildLessonHTML(module, session) {
   const isCompleted = completedSessions.has(session.id);
-  const next = nextSession(session.id);
+  const next        = nextSession(session.id);
   let html = '';
 
   /* Fil d'Ariane */
@@ -331,297 +519,210 @@ function buildLessonHTML(module, session) {
   if (session.video) {
     html += `
       <div class="video-wrapper">
-        <iframe
-          src="${session.video}"
-          title="${session.title}"
+        <iframe src="${session.video}" title="${session.title}"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen>
-        </iframe>
-      </div>
-    `;
+          allowfullscreen></iframe>
+      </div>`;
   } else {
-    html += `
-      <div style="background:#f0f4f8;border-radius:14px;padding:32px;text-align:center;color:#9ba8bb;margin-bottom:32px;font-size:0.9rem;">
-        🎬 La vidéo de cette séance sera disponible prochainement.
-      </div>
-    `;
+    html += `<div class="video-placeholder">🎬 La vidéo de cette séance sera disponible prochainement.</div>`;
   }
 
   /* Texte d'introduction */
-  if (session.intro) {
-    html += `<div class="lesson-intro">${session.intro}</div>`;
-  }
+  if (session.intro) html += `<div class="lesson-intro">${session.intro}</div>`;
 
   /* Ressources téléchargeables */
-  if (session.resources && session.resources.length > 0) {
+  if (session.resources?.length) {
     html += `<div class="resources-section"><p class="section-title">📎 Ressources</p>`;
     session.resources.forEach(res => {
-      html += `
-        <a href="${res.url}" class="resource-link" target="_blank" rel="noopener noreferrer">
-          <span class="link-icon">${res.icon || '📄'}</span>
-          ${res.label}
-        </a>
-      `;
+      html += `<a href="${res.url}" class="resource-link" target="_blank" rel="noopener noreferrer">
+        <span class="link-icon">${res.icon || '📄'}</span>${res.label}</a>`;
     });
     html += `</div>`;
   }
 
   /* Quiz */
-  if (session.quiz && session.quiz.length > 0) {
-    html += buildQuizHTML(session.quiz);
-  }
+  if (session.quiz?.length) html += buildQuizHTML(session.quiz);
 
   /* Séparateur */
   html += `<hr style="border:none;border-top:1px solid rgba(0,0,0,0.07);margin:32px 0;" />`;
 
-  /* Bouton "Marquer comme terminée" */
+  /* Bouton "Marquer comme terminée" + bouton suivant */
   html += `
     <div class="complete-btn-wrapper">
-      <button
-        id="complete-btn"
-        class="complete-btn"
-        ${isCompleted ? 'disabled' : ''}>
+      <button id="complete-btn" class="complete-btn" ${isCompleted ? 'disabled' : ''}>
         ${isCompleted ? '✅ Séance terminée !' : '✅ Marquer cette séance comme terminée'}
       </button>
-      <button
-        id="next-btn"
-        class="next-btn ${isCompleted && next ? 'visible' : ''}"
+      <button id="next-btn" class="next-btn ${isCompleted && next ? 'visible' : ''}"
         ${next ? '' : 'style="display:none"'}>
-        Séance suivante : ${next ? next.title : ''} →
+        Séance suivante : ${next?.title || ''} →
       </button>
-    </div>
-  `;
+    </div>`;
 
   return html;
 }
 
 /* ============================================================
-   5. QUIZ — Construction HTML
+   12. QUIZ
    ============================================================ */
 
-/**
- * Construit le HTML du bloc quiz.
- * @param {Array} questions
- * @returns {string}
- */
 function buildQuizHTML(questions) {
   let html = `
     <div class="quiz-section" id="quiz-section">
-      <h2 class="quiz-title">🧠 Quiz de la séance</h2>
-  `;
+      <h2 class="quiz-title">🧠 Quiz de la séance</h2>`;
 
   questions.forEach((q, idx) => {
     html += `
       <div class="quiz-question-block" data-question-id="${q.id}">
         <p class="quiz-question-text">${idx + 1}. ${q.question}</p>
-        <div class="quiz-options" role="radiogroup" aria-label="${q.question}">
-    `;
+        <div class="quiz-options" role="radiogroup">`;
     q.options.forEach(opt => {
-      html += `
-        <label class="quiz-option" data-option-id="${opt.id}">
-          <input type="radio" name="q_${q.id}" value="${opt.id}" />
-          ${opt.text}
-        </label>
-      `;
+      html += `<label class="quiz-option" data-option-id="${opt.id}">
+        <input type="radio" name="q_${q.id}" value="${opt.id}" />
+        ${opt.text}</label>`;
     });
-    html += `
-        </div>
-        <div class="quiz-feedback" id="feedback_${q.id}"></div>
-      </div>
-    `;
+    html += `</div><div class="quiz-feedback" id="feedback_${q.id}"></div></div>`;
   });
 
   html += `
       <button class="quiz-validate-btn" id="quiz-validate-btn" disabled>
         Valider mes réponses
       </button>
-    </div>
-  `;
-
+    </div>`;
   return html;
 }
 
-/* ============================================================
-   6. ÉVÉNEMENTS — Quiz, bouton "Terminé", "Suivant"
-   ============================================================ */
-
-/**
- * Initialise tous les événements pour une séance chargée.
- * @param {object} session
- */
 function initLessonEvents(session) {
+  if (session.quiz?.length) initQuizEvents(session.quiz);
 
-  /* --- Quiz --- */
-  if (session.quiz && session.quiz.length > 0) {
-    initQuizEvents(session.quiz);
-  }
-
-  /* --- Bouton "Marquer comme terminée" --- */
   const completeBtn = document.getElementById('complete-btn');
   const nextBtn     = document.getElementById('next-btn');
 
   if (completeBtn && !completeBtn.disabled) {
-    completeBtn.addEventListener('click', () => {
-      markSessionComplete(session.id, completeBtn, nextBtn);
-    });
+    completeBtn.addEventListener('click', () =>
+      markSessionComplete(session.id, completeBtn, nextBtn));
   }
 
-  /* --- Bouton "Séance suivante" --- */
   if (nextBtn) {
     const next = nextSession(session.id);
-    if (next) {
-      nextBtn.addEventListener('click', () => loadSession(next.id));
-    }
+    if (next) nextBtn.addEventListener('click', () => loadSession(next.id));
   }
 }
 
-/**
- * Active la validation du quiz quand toutes les questions ont une réponse.
- * @param {Array} questions
- */
 function initQuizEvents(questions) {
   const validateBtn = document.getElementById('quiz-validate-btn');
   if (!validateBtn) return;
 
-  /* Active le bouton dès que toutes les questions ont une réponse */
   function checkAllAnswered() {
-    const allAnswered = questions.every(q => {
-      return document.querySelector(`input[name="q_${q.id}"]:checked`);
-    });
-    validateBtn.disabled = !allAnswered;
+    validateBtn.disabled = !questions.every(q =>
+      document.querySelector(`input[name="q_${q.id}"]:checked`));
   }
 
   questions.forEach(q => {
-    const radios = document.querySelectorAll(`input[name="q_${q.id}"]`);
-    radios.forEach(radio => {
+    document.querySelectorAll(`input[name="q_${q.id}"]`).forEach(radio => {
       radio.addEventListener('change', () => {
-        /* Mettre à jour la classe "selected" sur les labels */
-        document.querySelectorAll(`input[name="q_${q.id}"]`).forEach(r => {
-          r.closest('.quiz-option').classList.remove('selected');
-        });
+        document.querySelectorAll(`input[name="q_${q.id}"]`).forEach(r =>
+          r.closest('.quiz-option').classList.remove('selected'));
         radio.closest('.quiz-option').classList.add('selected');
         checkAllAnswered();
       });
     });
   });
 
-  /* Validation des réponses */
-  validateBtn.addEventListener('click', () => {
-    validateQuiz(questions, validateBtn);
-  });
+  validateBtn.addEventListener('click', () => validateQuiz(questions, validateBtn));
 }
 
-/**
- * Valide les réponses du quiz et affiche les feedbacks.
- * @param {Array} questions
- * @param {HTMLElement} validateBtn
- */
 function validateQuiz(questions, validateBtn) {
   questions.forEach(q => {
     const selected = document.querySelector(`input[name="q_${q.id}"]:checked`);
     const feedback = document.getElementById(`feedback_${q.id}`);
     const block    = document.querySelector(`.quiz-question-block[data-question-id="${q.id}"]`);
 
-    /* Réinitialise les styles */
-    block.querySelectorAll('.quiz-option').forEach(opt => {
-      opt.classList.remove('correct', 'wrong');
-    });
+    block.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('correct', 'wrong'));
 
     if (!selected) return;
 
     const isCorrect = selected.value === q.answer;
+    block.querySelector(`input[value="${q.answer}"]`)?.closest('.quiz-option')?.classList.add('correct');
 
-    /* Colorier la bonne réponse en vert */
-    const correctLabel = block.querySelector(`input[value="${q.answer}"]`)?.closest('.quiz-option');
-    if (correctLabel) correctLabel.classList.add('correct');
-
-    /* Si mauvaise réponse, colorier le choix erroné en rouge */
     if (!isCorrect) {
       selected.closest('.quiz-option').classList.add('wrong');
-      feedback.textContent = '❌ Ce n\'est pas la bonne réponse. Regardez la réponse correcte surlignée en vert.';
+      feedback.textContent = "❌ Ce n'est pas la bonne réponse. La réponse correcte est surlignée en vert.";
       feedback.className = 'quiz-feedback wrong';
     } else {
       feedback.textContent = '✅ Bravo, c\'est la bonne réponse !';
       feedback.className = 'quiz-feedback correct';
     }
 
-    /* Désactiver les options */
     block.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
   });
 
-  /* Désactiver le bouton de validation */
   validateBtn.disabled = true;
   validateBtn.textContent = 'Réponses validées ✓';
 }
 
 /* ============================================================
-   7. GAMIFICATION — Confettis
+   13. GAMIFICATION — Confettis
    ============================================================ */
 
-/**
- * Lance une animation de confettis aux couleurs Tisselia.
- */
 function launchConfetti() {
   if (typeof confetti === 'undefined') return;
   const colors = ['#4db8c8', '#f59b8b', '#ffffff', '#22c55e', '#fbbf24'];
-  /* Rafale depuis la gauche */
-  confetti({ particleCount: 80, angle: 60,  spread: 55, origin: { x: 0,   y: 0.75 }, colors });
-  /* Rafale depuis la droite (légère pause pour l'effet "croisé") */
-  setTimeout(() => {
-    confetti({ particleCount: 80, angle: 120, spread: 55, origin: { x: 1, y: 0.75 }, colors });
-  }, 150);
+  confetti({ particleCount: 80, angle: 60,  spread: 55, origin: { x: 0, y: 0.75 }, colors });
+  setTimeout(() =>
+    confetti({ particleCount: 80, angle: 120, spread: 55, origin: { x: 1, y: 0.75 }, colors }),
+    150);
 }
 
 /* ============================================================
-   8. PROGRESSION — Marquer une séance comme terminée
+   14. PROGRESSION — Marquer comme terminée (Firestore)
    ============================================================ */
 
-/**
- * Marque la séance comme terminée, met à jour l'UI.
- * @param {string} sessionId
- * @param {HTMLElement} completeBtn
- * @param {HTMLElement} nextBtn
- */
-function markSessionComplete(sessionId, completeBtn, nextBtn) {
+async function markSessionComplete(sessionId, completeBtn, nextBtn) {
+  /* Optimistic update — feedback immédiat sans attendre Firestore */
   completedSessions.add(sessionId);
-  saveProgress(completedSessions);
-
-  /* Confettis 🎉 */
-  launchConfetti();
-
-  /* Mettre à jour le bouton */
   completeBtn.disabled = true;
   completeBtn.textContent = '✅ Séance terminée !';
+  launchConfetti();
 
-  /* Afficher le bouton "Séance suivante" */
   const next = nextSession(sessionId);
-  if (next && nextBtn) {
-    nextBtn.classList.add('visible');
-  }
+  if (next && nextBtn) nextBtn.classList.add('visible');
 
-  /* Rafraîchir la sidebar (déblocage de la séance suivante) et la progression */
   refreshNavState();
   updateProgressBar();
+
+  /* Écriture dans Firestore */
+  try {
+    await db.collection('users').doc(currentUser.uid).update({
+      completedSessions: firebase.firestore.FieldValue.arrayUnion(sessionId)
+    });
+  } catch (err) {
+    console.error('Erreur sauvegarde Firestore :', err);
+    /* Annuler l'optimistic update en cas d'échec */
+    completedSessions.delete(sessionId);
+    completeBtn.disabled = false;
+    completeBtn.textContent = '✅ Marquer cette séance comme terminée';
+    if (nextBtn) nextBtn.classList.remove('visible');
+    refreshNavState();
+    updateProgressBar();
+  }
 }
 
 /* ============================================================
-   9. PAGE D'ACCUEIL
+   15. PAGE D'ACCUEIL
    ============================================================ */
 
-/**
- * Affiche la page d'accueil et réinitialise l'état courant.
- */
 function showHomePage() {
   currentSessionId = null;
   welcomeScreen.classList.remove('hidden');
   lessonContent.classList.add('hidden');
   mainHeaderTitle.textContent = 'Intelligence Artificielle & Cybersécurité';
-  refreshNavState(); /* met homeBtn en .active, retire .active des séances */
+  refreshNavState();
 }
 
 /* ============================================================
-   10. SIDEBAR MOBILE
+   16. SIDEBAR MOBILE
    ============================================================ */
+
 function openSidebarMobile() {
   sidebar.classList.add('open');
   sidebarOverlay.classList.add('active');
@@ -638,34 +739,7 @@ hamburgerBtn.addEventListener('click', openSidebarMobile);
 sidebarCloseBtn.addEventListener('click', closeSidebarMobile);
 sidebarOverlay.addEventListener('click', closeSidebarMobile);
 
-/* ============================================================
-   11. LISTENERS GLOBAUX
-   ============================================================ */
-
-/* Bouton "Accueil" dans la sidebar */
 homeBtn.addEventListener('click', () => {
   closeSidebarMobile();
   showHomePage();
 });
-
-/* ============================================================
-   12. INITIALISATION
-   ============================================================ */
-
-/**
- * Point d'entrée de l'application.
- * Attache le listener du bouton CTA après que le DOM de la homepage est prêt.
- */
-function init() {
-  buildNav();
-  updateProgressBar();
-
-  /* Bouton "Reprendre ma formation" (dans la homepage) */
-  document.getElementById('start-btn').addEventListener('click', () => {
-    const resumeId = getResumeSessionId();
-    if (resumeId) loadSession(resumeId);
-  });
-}
-
-/* Lancer l'app quand le DOM est prêt */
-document.addEventListener('DOMContentLoaded', init);
