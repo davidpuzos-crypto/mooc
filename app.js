@@ -66,6 +66,9 @@ const authSubtitle      = document.getElementById('auth-subtitle');
 const authError         = document.getElementById('auth-error');
 const authToggleBtn     = document.getElementById('auth-toggle-btn');
 const authToggleLabel   = document.getElementById('auth-toggle-label');
+const signupConfirmInput = document.getElementById('signup-password-confirm');
+const authMainView      = document.getElementById('auth-main-view');
+const authResetView     = document.getElementById('auth-reset-view');
 
 /* Plateforme */
 const pendingScreen      = document.getElementById('pending-screen');
@@ -104,18 +107,27 @@ function hideAuthOverlay() { authOverlay.classList.add('hidden'); }
 /** Bascule entre mode "Se connecter" et "S'inscrire". */
 function setAuthMode(signup) {
   isSignupMode = signup;
+  const confirmField  = document.getElementById('confirm-password-field');
+  const forgotWrapper = document.getElementById('forgot-password-wrapper');
+
   if (signup) {
-    authTitle.textContent       = "S'inscrire";
-    authSubtitle.textContent    = 'Créez votre compte gratuitement';
-    authSubmitBtn.textContent   = 'Créer mon compte';
-    authToggleLabel.textContent = 'Déjà un compte ?';
-    authToggleBtn.textContent   = 'Se connecter';
+    authTitle.textContent          = "S'inscrire";
+    authSubtitle.textContent       = 'Créez votre compte gratuitement';
+    authSubmitBtn.textContent      = 'Créer mon compte';
+    authToggleLabel.textContent    = 'Déjà un compte ?';
+    authToggleBtn.textContent      = 'Se connecter';
+    authPasswordInput.autocomplete = 'new-password';
+    confirmField.classList.remove('hidden');
+    forgotWrapper.classList.add('hidden');
   } else {
-    authTitle.textContent       = 'Se connecter';
-    authSubtitle.textContent    = 'Accédez à votre espace de formation';
-    authSubmitBtn.textContent   = 'Se connecter';
-    authToggleLabel.textContent = 'Pas encore de compte ?';
-    authToggleBtn.textContent   = "S'inscrire";
+    authTitle.textContent          = 'Se connecter';
+    authSubtitle.textContent       = 'Accédez à votre espace de formation';
+    authSubmitBtn.textContent      = 'Se connecter';
+    authToggleLabel.textContent    = 'Pas encore de compte ?';
+    authToggleBtn.textContent      = "S'inscrire";
+    authPasswordInput.autocomplete = 'current-password';
+    confirmField.classList.add('hidden');
+    forgotWrapper.classList.remove('hidden');
   }
   hideAuthError();
 }
@@ -155,6 +167,14 @@ authForm.addEventListener('submit', async (e) => {
 
   const email    = authEmailInput.value.trim();
   const password = authPasswordInput.value;
+
+  /* Vérification de la confirmation du mot de passe (inscription) */
+  if (isSignupMode && password !== signupConfirmInput.value) {
+    showAuthError('Les mots de passe ne correspondent pas.');
+    authSubmitBtn.disabled = false;
+    authSubmitBtn.textContent = 'Créer mon compte';
+    return;
+  }
 
   try {
     if (isSignupMode) {
@@ -985,5 +1005,117 @@ adminPanelBtn.addEventListener('click', () => {
     showHomePage();
   } else {
     showAdminPanel();
+  }
+});
+
+/* ============================================================
+   21. AUTH v2 — Icônes œil, effacement d'erreurs, Google,
+                 Mot de passe oublié / Réinitialisation
+   ============================================================ */
+
+/* --- Effacer les erreurs à la frappe --- */
+authEmailInput.addEventListener('input', hideAuthError);
+authPasswordInput.addEventListener('input', hideAuthError);
+signupConfirmInput.addEventListener('input', hideAuthError);
+
+/* --- Bascule visibilité mot de passe (icône œil) --- */
+function setupEyeToggle(inputId, toggleId, iconId) {
+  const input  = document.getElementById(inputId);
+  const toggle = document.getElementById(toggleId);
+  const icon   = document.getElementById(iconId);
+  toggle.addEventListener('click', () => {
+    const isVisible  = input.type === 'text';
+    input.type       = isVisible ? 'password' : 'text';
+    icon.className   = isVisible ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash';
+  });
+}
+setupEyeToggle('auth-password',          'toggle-password',         'eye-icon-password');
+setupEyeToggle('signup-password-confirm', 'toggle-password-confirm', 'eye-icon-confirm');
+
+/* --- Connexion Google --- */
+document.getElementById('google-signin-btn').addEventListener('click', async () => {
+  hideAuthError();
+  const btn = document.getElementById('google-signin-btn');
+  btn.disabled = true;
+
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const result   = await auth.signInWithPopup(provider);
+    const user     = result.user;
+
+    /* Créer le document Firestore si l'utilisateur est nouveau */
+    const docRef  = db.collection('users').doc(user.uid);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      await docRef.set({
+        email:              user.email,
+        role:               'student',
+        status:             'pending',
+        maxSessionUnlocked: 1,
+        completedSessions:  [],
+        createdAt:          firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    /* onAuthStateChanged prend le relais */
+
+  } catch (err) {
+    /* Ignorer silencieusement si l'utilisateur ferme le popup */
+    if (err.code !== 'auth/popup-closed-by-user' &&
+        err.code !== 'auth/cancelled-popup-request') {
+      showAuthError(translateFirebaseError(err.code));
+    }
+    btn.disabled = false;
+  }
+});
+
+/* --- Mot de passe oublié : afficher la vue de réinitialisation --- */
+document.getElementById('forgot-password-btn').addEventListener('click', () => {
+  /* Pré-remplir l'email si déjà saisi */
+  document.getElementById('reset-email').value = authEmailInput.value;
+  document.getElementById('reset-error').classList.add('hidden');
+  document.getElementById('reset-success').classList.add('hidden');
+  const sendBtn = document.getElementById('reset-send-btn');
+  sendBtn.disabled = false;
+  sendBtn.textContent = 'Envoyer le lien de réinitialisation';
+
+  authMainView.classList.add('hidden');
+  authResetView.classList.remove('hidden');
+});
+
+/* --- Retour vers la vue principale --- */
+document.getElementById('reset-back-btn').addEventListener('click', () => {
+  authResetView.classList.add('hidden');
+  authMainView.classList.remove('hidden');
+});
+
+/* --- Envoi de l'email de réinitialisation --- */
+document.getElementById('reset-send-btn').addEventListener('click', async () => {
+  const email     = document.getElementById('reset-email').value.trim();
+  const errorEl   = document.getElementById('reset-error');
+  const successEl = document.getElementById('reset-success');
+  const sendBtn   = document.getElementById('reset-send-btn');
+
+  errorEl.classList.add('hidden');
+  successEl.classList.add('hidden');
+
+  if (!email) {
+    errorEl.textContent = 'Veuillez saisir votre adresse email.';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  sendBtn.disabled    = true;
+  sendBtn.textContent = '…';
+
+  try {
+    await auth.sendPasswordResetEmail(email);
+    successEl.textContent = '✅ Email envoyé ! Vérifiez votre boîte de réception (et vos spams).';
+    successEl.classList.remove('hidden');
+    sendBtn.textContent = 'Email envoyé ✓';
+  } catch (err) {
+    errorEl.textContent = translateFirebaseError(err.code);
+    errorEl.classList.remove('hidden');
+    sendBtn.disabled    = false;
+    sendBtn.textContent = 'Envoyer le lien de réinitialisation';
   }
 });
