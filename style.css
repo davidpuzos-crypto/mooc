@@ -1450,3 +1450,143 @@ img, iframe { max-width: 100%; display: block; }
   line-height: 1.5;
 }
 .auth-success.hidden { display: none; }
+
+/* ============================================================
+   BRANDING — Logo image dans la sidebar
+   ============================================================ */
+
+.sidebar-logo-img {
+  max-width: 140px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* ============================================================
+   ONGLETS COURS / ÉVALUATION
+   ============================================================ */
+
+.lesson-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid rgba(0,0,0,0.07);
+  margin-bottom: 28px;
+}
+
+.lesson-tab {
+  padding: 10px 22px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition);
+}
+.lesson-tab:hover:not(.active) { color: var(--text-primary); }
+.lesson-tab.active {
+  color: var(--cyan);
+  border-bottom-color: var(--cyan);
+}
+
+.tab-panel.hidden { display: none; }
+
+/* ============================================================
+   ÉVALUATION — Placeholder (séance sans évaluation encore)
+   ============================================================ */
+
+.eval-placeholder {
+  text-align: center;
+  padding: 56px 24px;
+  color: var(--text-secondary);
+}
+.eval-placeholder span {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 14px;
+}
+.eval-placeholder p {
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   ÉVALUATION — Type "email"
+   ============================================================ */
+
+.email-eval {
+  background: rgba(77,184,200,0.05);
+  border: 1.5px solid rgba(77,184,200,0.2);
+  border-radius: var(--radius-md);
+  padding: 28px 32px;
+  margin: 8px 0 24px;
+}
+
+.email-eval-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+
+.email-eval-instructions {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.75;
+  margin-bottom: 12px;
+}
+
+.email-eval-contact {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.email-eval-address {
+  font-weight: 700;
+  color: var(--cyan);
+  text-decoration: none;
+  border-bottom: 1.5px solid rgba(77,184,200,0.35);
+  transition: color var(--transition), border-color var(--transition);
+}
+.email-eval-address:hover {
+  color: var(--peach);
+  border-bottom-color: var(--peach);
+}
+
+/* Case à cocher d'engagement */
+.email-checkbox-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 2px solid rgba(0,0,0,0.09);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  margin-top: 4px;
+}
+.email-checkbox-wrapper:hover {
+  border-color: rgba(77,184,200,0.4);
+}
+.email-checkbox-wrapper input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: var(--cyan);
+}
+.email-checkbox-label {
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--text-primary);
+  cursor: pointer;
+}

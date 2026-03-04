@@ -562,16 +562,29 @@ function loadSession(sessionId) {
 function buildLessonHTML(module, session) {
   const isCompleted = completedSessions.has(session.id);
   const next        = nextSession(session.id);
-  let html = '';
+  const ev          = session.evaluation || null;
+  /* Le bouton est grisé par défaut si une évaluation est requise (et pas encore complétée) */
+  const needsGate   = !isCompleted && ev !== null;
 
-  /* Fil d'Ariane */
-  html += `
+  /* ── Fil d'Ariane + Titre ── */
+  let html = `
     <div class="lesson-breadcrumb">
       <span>${module.title}</span>
       <span class="sep">›</span>
       <span>${session.title}</span>
     </div>
     <h1 class="lesson-title">${session.title}</h1>
+
+    <!-- Onglets de navigation -->
+    <div class="lesson-tabs" role="tablist">
+      <button class="lesson-tab active" data-tab="cours"
+        role="tab" aria-selected="true">📖 Le Cours</button>
+      <button class="lesson-tab" data-tab="evaluation"
+        role="tab" aria-selected="false">✍️ L'Évaluation</button>
+    </div>
+
+    <!-- ── Onglet Cours ── -->
+    <div class="tab-panel" id="tab-cours" role="tabpanel">
   `;
 
   /* Vidéo YouTube */
@@ -599,32 +612,46 @@ function buildLessonHTML(module, session) {
     html += `</div>`;
   }
 
-  /* Quiz */
-  if (session.quiz?.length) html += buildQuizHTML(session.quiz);
+  html += `</div><!-- /tab-cours -->
 
-  /* Séparateur */
-  html += `<hr style="border:none;border-top:1px solid rgba(0,0,0,0.07);margin:32px 0;" />`;
+    <!-- ── Onglet Évaluation ── -->
+    <div class="tab-panel hidden" id="tab-evaluation" role="tabpanel">
+  `;
 
-  /* Bouton "Marquer comme terminée" + bouton suivant */
+  /* Contenu de l'évaluation */
+  if (!ev) {
+    html += `
+      <div class="eval-placeholder">
+        <span>📝</span>
+        <p>L'évaluation de cette séance sera disponible prochainement.</p>
+      </div>`;
+  } else if (ev.type === 'qcm') {
+    html += buildQcmHTML(ev.questions);
+  } else if (ev.type === 'email') {
+    html += buildEmailEvalHTML();
+  }
+
+  /* Séparateur + bouton de complétion (uniquement dans l'onglet Évaluation) */
   html += `
+    <hr style="border:none;border-top:1px solid rgba(0,0,0,0.07);margin:32px 0;" />
     <div class="complete-btn-wrapper">
-      <button id="complete-btn" class="complete-btn" ${isCompleted ? 'disabled' : ''}>
+      <button id="complete-btn" class="complete-btn"
+        ${isCompleted || needsGate ? 'disabled' : ''}>
         ${isCompleted ? '✅ Séance terminée !' : '✅ Marquer cette séance comme terminée'}
       </button>
-      <button id="next-btn" class="next-btn ${isCompleted && next ? 'visible' : ''}"
+      <button id="next-btn"
+        class="next-btn${isCompleted && next ? ' visible' : ''}"
         ${next ? '' : 'style="display:none"'}>
         Séance suivante : ${next?.title || ''} →
       </button>
-    </div>`;
+    </div>
+  </div><!-- /tab-evaluation -->`;
 
   return html;
 }
 
-/* ============================================================
-   12. QUIZ
-   ============================================================ */
-
-function buildQuizHTML(questions) {
+/** HTML pour une évaluation de type QCM. */
+function buildQcmHTML(questions) {
   let html = `
     <div class="quiz-section" id="quiz-section">
       <h2 class="quiz-title">🧠 Quiz de la séance</h2>`;
@@ -650,24 +677,93 @@ function buildQuizHTML(questions) {
   return html;
 }
 
-function initLessonEvents(session) {
-  if (session.quiz?.length) initQuizEvents(session.quiz);
+/** HTML pour une évaluation de type email. */
+function buildEmailEvalHTML() {
+  return `
+    <div class="email-eval">
+      <p class="email-eval-title">📧 Envoi de votre travail par e-mail</p>
+      <p class="email-eval-instructions">
+        Pour valider cette séance, envoyez votre production (document Word, PDF,
+        lien Canva, présentation…) à l'adresse e-mail de votre formateur.
+        Indiquez votre <strong>nom complet</strong> et
+        l'<strong>intitulé de la séance</strong> dans l'objet du message.
+      </p>
+      <p class="email-eval-contact">
+        📬 Envoyer à :
+        <a href="mailto:davidpuzos@tisselia.com" class="email-eval-address">
+          davidpuzos@tisselia.com
+        </a>
+      </p>
+      <label class="email-checkbox-wrapper">
+        <input type="checkbox" id="confirm-checkbox" />
+        <span class="email-checkbox-label">
+          Je confirme avoir envoyé mon travail par e-mail à
+          <strong>davidpuzos@tisselia.com</strong>.
+        </span>
+      </label>
+    </div>`;
+}
 
+/* ============================================================
+   12. QUIZ & ÉVALUATION — Logique d'interactivité
+   ============================================================ */
+
+function initLessonEvents(session) {
+  const ev          = session.evaluation || null;
+  const isCompleted = completedSessions.has(session.id);
   const completeBtn = document.getElementById('complete-btn');
   const nextBtn     = document.getElementById('next-btn');
+  const next        = nextSession(session.id);
 
-  if (completeBtn && !completeBtn.disabled) {
+  /* ── Onglets Cours / Évaluation ── */
+  lessonContent.querySelectorAll('.lesson-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      lessonContent.querySelectorAll('.lesson-tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      lessonContent.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
+    });
+  });
+
+  /* ── Logique d'évaluation (uniquement si la séance n'est pas déjà terminée) ── */
+  if (!isCompleted) {
+    if (ev?.type === 'qcm') {
+      /* QCM : active le bouton "Terminée" après validation du quiz */
+      initQuizEvents(ev.questions, () => { completeBtn.disabled = false; });
+    } else if (ev?.type === 'email') {
+      /* Email : active le bouton "Terminée" quand la case est cochée */
+      const checkbox = document.getElementById('confirm-checkbox');
+      if (checkbox) {
+        checkbox.addEventListener('change', () => {
+          completeBtn.disabled = !checkbox.checked;
+        });
+      }
+    }
+    /* Si evaluation === null : pas de verrou, bouton déjà actif depuis le HTML */
+  }
+
+  /* ── Bouton "Marquer comme terminée" ── */
+  if (completeBtn && !isCompleted) {
     completeBtn.addEventListener('click', () =>
       markSessionComplete(session.id, completeBtn, nextBtn));
   }
 
-  if (nextBtn) {
-    const next = nextSession(session.id);
-    if (next) nextBtn.addEventListener('click', () => loadSession(next.id));
+  /* ── Bouton "Séance suivante" ── */
+  if (nextBtn && next) {
+    nextBtn.addEventListener('click', () => loadSession(next.id));
   }
 }
 
-function initQuizEvents(questions) {
+/**
+ * Initialise les interactions du quiz QCM.
+ * @param {Array}    questions  - tableau de questions
+ * @param {Function} onValidated - callback appelé après validation (active le bouton Terminée)
+ */
+function initQuizEvents(questions, onValidated) {
   const validateBtn = document.getElementById('quiz-validate-btn');
   if (!validateBtn) return;
 
@@ -687,10 +783,11 @@ function initQuizEvents(questions) {
     });
   });
 
-  validateBtn.addEventListener('click', () => validateQuiz(questions, validateBtn));
+  validateBtn.addEventListener('click', () =>
+    validateQuiz(questions, validateBtn, onValidated));
 }
 
-function validateQuiz(questions, validateBtn) {
+function validateQuiz(questions, validateBtn, onValidated) {
   questions.forEach(q => {
     const selected = document.querySelector(`input[name="q_${q.id}"]:checked`);
     const feedback = document.getElementById(`feedback_${q.id}`);
@@ -717,6 +814,7 @@ function validateQuiz(questions, validateBtn) {
 
   validateBtn.disabled = true;
   validateBtn.textContent = 'Réponses validées ✓';
+  if (onValidated) onValidated();
 }
 
 /* ============================================================

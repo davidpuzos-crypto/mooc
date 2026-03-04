@@ -16,13 +16,17 @@
  *  }
  *
  *  Chaque session = {
- *    id       : identifiant unique (string),
- *    title    : Titre de la séance,
- *    video    : URL YouTube embed (ou null),
- *    intro    : Texte d'introduction (HTML ou texte brut, ou null),
- *    resources: [ { label, url, icon } ] ou [],
- *    quiz     : [ ...questions ] ou []
+ *    id         : identifiant unique (string),
+ *    title      : Titre de la séance,
+ *    video      : URL YouTube embed (ou null),
+ *    intro      : Texte d'introduction (HTML, ou null),
+ *    resources  : [ { label, url, icon } ] ou [],
+ *    evaluation : { type: "qcm"|"email", questions?: [...] } ou null
  *  }
+ *
+ *  evaluation.type = "qcm"   → quiz à choix multiples (questions obligatoires)
+ *  evaluation.type = "email" → l'élève envoie sa production par e-mail
+ *  evaluation = null         → pas encore d'évaluation pour cette séance
  *
  *  Chaque question de quiz = {
  *    id      : identifiant unique,
@@ -46,7 +50,7 @@ const courseData = {
       title: "Découvrir, s'initier et être créatif avec l'IA",
       sessions: [
 
-        /* ------ Séance 1 (données de test complètes) ------ */
+        /* ------ Séance 1 — évaluation QCM (données de test complètes) ------ */
         {
           id: "m1s1",
           title: "Séance 1 — Introduction à l'Intelligence Artificielle",
@@ -76,40 +80,45 @@ const courseData = {
               icon: "📋"
             }
           ],
-          quiz: [
-            {
-              id: "m1s1q1",
-              question: "Parmi les propositions suivantes, laquelle définit le mieux l'Intelligence Artificielle Générative ?",
-              options: [
-                { id: "a", text: "Un système qui détecte des anomalies dans des données." },
-                { id: "b", text: "Un système capable de créer du contenu original (texte, images, sons) à partir d'exemples." },
-                { id: "c", text: "Un programme qui exécute des tâches répétitives de façon automatisée." },
-                { id: "d", text: "Un algorithme qui trie et classe des données existantes." }
-              ],
-              answer: "b"
-            },
-            {
-              id: "m1s1q2",
-              question: "Quel modèle de langage de grande taille (LLM) a été rendu public par OpenAI et a popularisé les chatbots conversationnels à partir de 2022 ?",
-              options: [
-                { id: "a", text: "DALL·E" },
-                { id: "b", text: "Midjourney" },
-                { id: "c", text: "ChatGPT (basé sur GPT)" },
-                { id: "d", text: "Stable Diffusion" }
-              ],
-              answer: "c"
-            }
-          ]
+          evaluation: {
+            type: "qcm",
+            questions: [
+              {
+                id: "m1s1q1",
+                question: "Parmi les propositions suivantes, laquelle définit le mieux l'Intelligence Artificielle Générative ?",
+                options: [
+                  { id: "a", text: "Un système qui détecte des anomalies dans des données." },
+                  { id: "b", text: "Un système capable de créer du contenu original (texte, images, sons) à partir d'exemples." },
+                  { id: "c", text: "Un programme qui exécute des tâches répétitives de façon automatisée." },
+                  { id: "d", text: "Un algorithme qui trie et classe des données existantes." }
+                ],
+                answer: "b"
+              },
+              {
+                id: "m1s1q2",
+                question: "Quel modèle de langage de grande taille (LLM) a été rendu public par OpenAI et a popularisé les chatbots conversationnels à partir de 2022 ?",
+                options: [
+                  { id: "a", text: "DALL·E" },
+                  { id: "b", text: "Midjourney" },
+                  { id: "c", text: "ChatGPT (basé sur GPT)" },
+                  { id: "d", text: "Stable Diffusion" }
+                ],
+                answer: "c"
+              }
+            ]
+          }
         },
 
-        /* ------ Séance 2 (vide pour l'instant) ------ */
+        /* ------ Séance 2 — évaluation par e-mail (démonstration) ------ */
         {
           id: "m1s2",
           title: "Séance 2 — Les grands outils IA du moment",
           video: null,
           intro: null,
           resources: [],
-          quiz: []
+          evaluation: {
+            type: "email"
+          }
         },
 
         /* ------ Séance 3 ------ */
@@ -119,7 +128,7 @@ const courseData = {
           video: null,
           intro: null,
           resources: [],
-          quiz: []
+          evaluation: null
         },
 
         /* ------ Séance 4 ------ */
@@ -129,7 +138,7 @@ const courseData = {
           video: null,
           intro: null,
           resources: [],
-          quiz: []
+          evaluation: null
         }
       ]
     },
@@ -148,7 +157,7 @@ const courseData = {
           video: null,
           intro: null,
           resources: [],
-          quiz: []
+          evaluation: null
         },
         {
           id: "m2s6",
@@ -156,7 +165,7 @@ const courseData = {
           video: null,
           intro: null,
           resources: [],
-          quiz: []
+          evaluation: null
         },
         {
           id: "m2s7",
@@ -164,7 +173,7 @@ const courseData = {
           video: null,
           intro: null,
           resources: [],
-          quiz: []
+          evaluation: null
         },
         {
           id: "m2s8",
@@ -172,7 +181,7 @@ const courseData = {
           video: null,
           intro: null,
           resources: [],
-          quiz: []
+          evaluation: null
         }
       ]
     },
@@ -190,7 +199,7 @@ const courseData = {
           video: null,
           intro: null,
           resources: [],
-          quiz: []
+          evaluation: null
         },
         {
           id: "m3s10",
@@ -198,7 +207,7 @@ const courseData = {
           video: null,
           intro: null,
           resources: [],
-          quiz: []
+          evaluation: null
         }
       ]
     },
@@ -216,7 +225,7 @@ const courseData = {
           video: null,
           intro: null,
           resources: [],
-          quiz: []
+          evaluation: null
         },
         {
           id: "m4s12",
@@ -224,7 +233,7 @@ const courseData = {
           video: null,
           intro: null,
           resources: [],
-          quiz: []
+          evaluation: null
         }
       ]
     }
