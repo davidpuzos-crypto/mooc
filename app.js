@@ -199,6 +199,14 @@ auth.onAuthStateChanged((user) => {
     hideAuthOverlay();
     userEmailDisplay.textContent = user.email;
     sidebarFooter.classList.remove('hidden');
+
+    /* Ceinture et bretelles : si l'email est EXACTEMENT celui de l'admin,
+       on force l'affichage du bouton et le listener SANS attendre Firestore. */
+    if (user.email === ADMIN_EMAIL) {
+      sidebarAdminWrapper.classList.remove('hidden');
+      startAdminUsersListener();
+    }
+
     startUserDocListener(user.uid);
   } else {
     /* Utilisateur déconnecté */

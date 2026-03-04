@@ -103,14 +103,6 @@
         </button>
       </div>
 
-      <!-- Bouton Panel Admin (visible uniquement pour le compte admin) -->
-      <div class="sidebar-admin-wrapper hidden" id="sidebar-admin-wrapper">
-        <button id="admin-panel-btn" class="sidebar-admin-btn">
-          <span>⚙️</span>
-          <span>Panel Admin</span>
-        </button>
-      </div>
-
       <!-- Navigation modules/séances (masquée si pending) -->
       <nav id="course-nav" class="course-nav hidden" aria-label="Plan de cours"></nav>
 
@@ -119,6 +111,13 @@
         <div class="user-info">
           <span class="user-avatar">👤</span>
           <span id="user-email-display" class="user-email-display"></span>
+        </div>
+        <!-- Bouton Panel Admin — visible uniquement pour l'admin, juste au-dessus de Déconnexion -->
+        <div class="sidebar-admin-wrapper hidden" id="sidebar-admin-wrapper">
+          <button id="admin-panel-btn" class="sidebar-admin-btn">
+            <span>⚙️</span>
+            <span>Panel Admin</span>
+          </button>
         </div>
         <button id="signout-btn" class="signout-btn">Déconnexion</button>
       </div>
