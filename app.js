@@ -66,6 +66,9 @@ const authSubtitle      = document.getElementById('auth-subtitle');
 const authError         = document.getElementById('auth-error');
 const authToggleBtn     = document.getElementById('auth-toggle-btn');
 const authToggleLabel   = document.getElementById('auth-toggle-label');
+const signupConfirmInput = document.getElementById('signup-password-confirm');
+const authMainView      = document.getElementById('auth-main-view');
+const authResetView     = document.getElementById('auth-reset-view');
 
 /* Plateforme */
 const pendingScreen      = document.getElementById('pending-screen');
@@ -104,18 +107,27 @@ function hideAuthOverlay() { authOverlay.classList.add('hidden'); }
 /** Bascule entre mode "Se connecter" et "S'inscrire". */
 function setAuthMode(signup) {
   isSignupMode = signup;
+  const confirmField  = document.getElementById('confirm-password-field');
+  const forgotWrapper = document.getElementById('forgot-password-wrapper');
+
   if (signup) {
-    authTitle.textContent       = "S'inscrire";
-    authSubtitle.textContent    = 'Créez votre compte gratuitement';
-    authSubmitBtn.textContent   = 'Créer mon compte';
-    authToggleLabel.textContent = 'Déjà un compte ?';
-    authToggleBtn.textContent   = 'Se connecter';
+    authTitle.textContent          = "S'inscrire";
+    authSubtitle.textContent       = 'Créez votre compte gratuitement';
+    authSubmitBtn.textContent      = 'Créer mon compte';
+    authToggleLabel.textContent    = 'Déjà un compte ?';
+    authToggleBtn.textContent      = 'Se connecter';
+    authPasswordInput.autocomplete = 'new-password';
+    confirmField.classList.remove('hidden');
+    forgotWrapper.classList.add('hidden');
   } else {
-    authTitle.textContent       = 'Se connecter';
-    authSubtitle.textContent    = 'Accédez à votre espace de formation';
-    authSubmitBtn.textContent   = 'Se connecter';
-    authToggleLabel.textContent = 'Pas encore de compte ?';
-    authToggleBtn.textContent   = "S'inscrire";
+    authTitle.textContent          = 'Se connecter';
+    authSubtitle.textContent       = 'Accédez à votre espace de formation';
+    authSubmitBtn.textContent      = 'Se connecter';
+    authToggleLabel.textContent    = 'Pas encore de compte ?';
+    authToggleBtn.textContent      = "S'inscrire";
+    authPasswordInput.autocomplete = 'current-password';
+    confirmField.classList.add('hidden');
+    forgotWrapper.classList.remove('hidden');
   }
   hideAuthError();
 }
@@ -155,6 +167,14 @@ authForm.addEventListener('submit', async (e) => {
 
   const email    = authEmailInput.value.trim();
   const password = authPasswordInput.value;
+
+  /* Vérification de la confirmation du mot de passe (inscription) */
+  if (isSignupMode && password !== signupConfirmInput.value) {
+    showAuthError('Les mots de passe ne correspondent pas.');
+    authSubmitBtn.disabled = false;
+    authSubmitBtn.textContent = 'Créer mon compte';
+    return;
+  }
 
   try {
     if (isSignupMode) {
@@ -199,6 +219,14 @@ auth.onAuthStateChanged((user) => {
     hideAuthOverlay();
     userEmailDisplay.textContent = user.email;
     sidebarFooter.classList.remove('hidden');
+
+    /* Ceinture et bretelles : si l'email est EXACTEMENT celui de l'admin,
+       on force l'affichage du bouton et le listener SANS attendre Firestore. */
+    if (user.email === ADMIN_EMAIL) {
+      sidebarAdminWrapper.classList.remove('hidden');
+      startAdminUsersListener();
+    }
+
     startUserDocListener(user.uid);
   } else {
     /* Utilisateur déconnecté */
@@ -534,16 +562,29 @@ function loadSession(sessionId) {
 function buildLessonHTML(module, session) {
   const isCompleted = completedSessions.has(session.id);
   const next        = nextSession(session.id);
-  let html = '';
+  const ev          = session.evaluation || null;
+  /* Le bouton est grisé par défaut si une évaluation est requise (et pas encore complétée) */
+  const needsGate   = !isCompleted && ev !== null;
 
-  /* Fil d'Ariane */
-  html += `
+  /* ── Fil d'Ariane + Titre ── */
+  let html = `
     <div class="lesson-breadcrumb">
       <span>${module.title}</span>
       <span class="sep">›</span>
       <span>${session.title}</span>
     </div>
     <h1 class="lesson-title">${session.title}</h1>
+
+    <!-- Onglets de navigation -->
+    <div class="lesson-tabs" role="tablist">
+      <button class="lesson-tab active" data-tab="cours"
+        role="tab" aria-selected="true">📖 Le Cours</button>
+      <button class="lesson-tab" data-tab="evaluation"
+        role="tab" aria-selected="false">✍️ L'Évaluation</button>
+    </div>
+
+    <!-- ── Onglet Cours ── -->
+    <div class="tab-panel" id="tab-cours" role="tabpanel">
   `;
 
   /* Vidéo YouTube */
@@ -571,32 +612,46 @@ function buildLessonHTML(module, session) {
     html += `</div>`;
   }
 
-  /* Quiz */
-  if (session.quiz?.length) html += buildQuizHTML(session.quiz);
+  html += `</div><!-- /tab-cours -->
 
-  /* Séparateur */
-  html += `<hr style="border:none;border-top:1px solid rgba(0,0,0,0.07);margin:32px 0;" />`;
+    <!-- ── Onglet Évaluation ── -->
+    <div class="tab-panel hidden" id="tab-evaluation" role="tabpanel">
+  `;
 
-  /* Bouton "Marquer comme terminée" + bouton suivant */
+  /* Contenu de l'évaluation */
+  if (!ev) {
+    html += `
+      <div class="eval-placeholder">
+        <span>📝</span>
+        <p>L'évaluation de cette séance sera disponible prochainement.</p>
+      </div>`;
+  } else if (ev.type === 'qcm') {
+    html += buildQcmHTML(ev.questions);
+  } else if (ev.type === 'email') {
+    html += buildEmailEvalHTML();
+  }
+
+  /* Séparateur + bouton de complétion (uniquement dans l'onglet Évaluation) */
   html += `
+    <hr style="border:none;border-top:1px solid rgba(0,0,0,0.07);margin:32px 0;" />
     <div class="complete-btn-wrapper">
-      <button id="complete-btn" class="complete-btn" ${isCompleted ? 'disabled' : ''}>
+      <button id="complete-btn" class="complete-btn"
+        ${isCompleted || needsGate ? 'disabled' : ''}>
         ${isCompleted ? '✅ Séance terminée !' : '✅ Marquer cette séance comme terminée'}
       </button>
-      <button id="next-btn" class="next-btn ${isCompleted && next ? 'visible' : ''}"
+      <button id="next-btn"
+        class="next-btn${isCompleted && next ? ' visible' : ''}"
         ${next ? '' : 'style="display:none"'}>
         Séance suivante : ${next?.title || ''} →
       </button>
-    </div>`;
+    </div>
+  </div><!-- /tab-evaluation -->`;
 
   return html;
 }
 
-/* ============================================================
-   12. QUIZ
-   ============================================================ */
-
-function buildQuizHTML(questions) {
+/** HTML pour une évaluation de type QCM. */
+function buildQcmHTML(questions) {
   let html = `
     <div class="quiz-section" id="quiz-section">
       <h2 class="quiz-title">🧠 Quiz de la séance</h2>`;
@@ -622,24 +677,93 @@ function buildQuizHTML(questions) {
   return html;
 }
 
-function initLessonEvents(session) {
-  if (session.quiz?.length) initQuizEvents(session.quiz);
+/** HTML pour une évaluation de type email. */
+function buildEmailEvalHTML() {
+  return `
+    <div class="email-eval">
+      <p class="email-eval-title">📧 Envoi de votre travail par e-mail</p>
+      <p class="email-eval-instructions">
+        Pour valider cette séance, envoyez votre production (document Word, PDF,
+        lien Canva, présentation…) à l'adresse e-mail de votre formateur.
+        Indiquez votre <strong>nom complet</strong> et
+        l'<strong>intitulé de la séance</strong> dans l'objet du message.
+      </p>
+      <p class="email-eval-contact">
+        📬 Envoyer à :
+        <a href="mailto:davidpuzos@tisselia.com" class="email-eval-address">
+          davidpuzos@tisselia.com
+        </a>
+      </p>
+      <label class="email-checkbox-wrapper">
+        <input type="checkbox" id="confirm-checkbox" />
+        <span class="email-checkbox-label">
+          Je confirme avoir envoyé mon travail par e-mail à
+          <strong>davidpuzos@tisselia.com</strong>.
+        </span>
+      </label>
+    </div>`;
+}
 
+/* ============================================================
+   12. QUIZ & ÉVALUATION — Logique d'interactivité
+   ============================================================ */
+
+function initLessonEvents(session) {
+  const ev          = session.evaluation || null;
+  const isCompleted = completedSessions.has(session.id);
   const completeBtn = document.getElementById('complete-btn');
   const nextBtn     = document.getElementById('next-btn');
+  const next        = nextSession(session.id);
 
-  if (completeBtn && !completeBtn.disabled) {
+  /* ── Onglets Cours / Évaluation ── */
+  lessonContent.querySelectorAll('.lesson-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      lessonContent.querySelectorAll('.lesson-tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      lessonContent.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
+    });
+  });
+
+  /* ── Logique d'évaluation (uniquement si la séance n'est pas déjà terminée) ── */
+  if (!isCompleted) {
+    if (ev?.type === 'qcm') {
+      /* QCM : active le bouton "Terminée" après validation du quiz */
+      initQuizEvents(ev.questions, () => { completeBtn.disabled = false; });
+    } else if (ev?.type === 'email') {
+      /* Email : active le bouton "Terminée" quand la case est cochée */
+      const checkbox = document.getElementById('confirm-checkbox');
+      if (checkbox) {
+        checkbox.addEventListener('change', () => {
+          completeBtn.disabled = !checkbox.checked;
+        });
+      }
+    }
+    /* Si evaluation === null : pas de verrou, bouton déjà actif depuis le HTML */
+  }
+
+  /* ── Bouton "Marquer comme terminée" ── */
+  if (completeBtn && !isCompleted) {
     completeBtn.addEventListener('click', () =>
       markSessionComplete(session.id, completeBtn, nextBtn));
   }
 
-  if (nextBtn) {
-    const next = nextSession(session.id);
-    if (next) nextBtn.addEventListener('click', () => loadSession(next.id));
+  /* ── Bouton "Séance suivante" ── */
+  if (nextBtn && next) {
+    nextBtn.addEventListener('click', () => loadSession(next.id));
   }
 }
 
-function initQuizEvents(questions) {
+/**
+ * Initialise les interactions du quiz QCM.
+ * @param {Array}    questions  - tableau de questions
+ * @param {Function} onValidated - callback appelé après validation (active le bouton Terminée)
+ */
+function initQuizEvents(questions, onValidated) {
   const validateBtn = document.getElementById('quiz-validate-btn');
   if (!validateBtn) return;
 
@@ -659,10 +783,11 @@ function initQuizEvents(questions) {
     });
   });
 
-  validateBtn.addEventListener('click', () => validateQuiz(questions, validateBtn));
+  validateBtn.addEventListener('click', () =>
+    validateQuiz(questions, validateBtn, onValidated));
 }
 
-function validateQuiz(questions, validateBtn) {
+function validateQuiz(questions, validateBtn, onValidated) {
   questions.forEach(q => {
     const selected = document.querySelector(`input[name="q_${q.id}"]:checked`);
     const feedback = document.getElementById(`feedback_${q.id}`);
@@ -689,6 +814,7 @@ function validateQuiz(questions, validateBtn) {
 
   validateBtn.disabled = true;
   validateBtn.textContent = 'Réponses validées ✓';
+  if (onValidated) onValidated();
 }
 
 /* ============================================================
@@ -977,5 +1103,117 @@ adminPanelBtn.addEventListener('click', () => {
     showHomePage();
   } else {
     showAdminPanel();
+  }
+});
+
+/* ============================================================
+   21. AUTH v2 — Icônes œil, effacement d'erreurs, Google,
+                 Mot de passe oublié / Réinitialisation
+   ============================================================ */
+
+/* --- Effacer les erreurs à la frappe --- */
+authEmailInput.addEventListener('input', hideAuthError);
+authPasswordInput.addEventListener('input', hideAuthError);
+signupConfirmInput.addEventListener('input', hideAuthError);
+
+/* --- Bascule visibilité mot de passe (icône œil) --- */
+function setupEyeToggle(inputId, toggleId, iconId) {
+  const input  = document.getElementById(inputId);
+  const toggle = document.getElementById(toggleId);
+  const icon   = document.getElementById(iconId);
+  toggle.addEventListener('click', () => {
+    const isVisible  = input.type === 'text';
+    input.type       = isVisible ? 'password' : 'text';
+    icon.className   = isVisible ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash';
+  });
+}
+setupEyeToggle('auth-password',          'toggle-password',         'eye-icon-password');
+setupEyeToggle('signup-password-confirm', 'toggle-password-confirm', 'eye-icon-confirm');
+
+/* --- Connexion Google --- */
+document.getElementById('google-signin-btn').addEventListener('click', async () => {
+  hideAuthError();
+  const btn = document.getElementById('google-signin-btn');
+  btn.disabled = true;
+
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const result   = await auth.signInWithPopup(provider);
+    const user     = result.user;
+
+    /* Créer le document Firestore si l'utilisateur est nouveau */
+    const docRef  = db.collection('users').doc(user.uid);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      await docRef.set({
+        email:              user.email,
+        role:               'student',
+        status:             'pending',
+        maxSessionUnlocked: 1,
+        completedSessions:  [],
+        createdAt:          firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    /* onAuthStateChanged prend le relais */
+
+  } catch (err) {
+    /* Ignorer silencieusement si l'utilisateur ferme le popup */
+    if (err.code !== 'auth/popup-closed-by-user' &&
+        err.code !== 'auth/cancelled-popup-request') {
+      showAuthError(translateFirebaseError(err.code));
+    }
+    btn.disabled = false;
+  }
+});
+
+/* --- Mot de passe oublié : afficher la vue de réinitialisation --- */
+document.getElementById('forgot-password-btn').addEventListener('click', () => {
+  /* Pré-remplir l'email si déjà saisi */
+  document.getElementById('reset-email').value = authEmailInput.value;
+  document.getElementById('reset-error').classList.add('hidden');
+  document.getElementById('reset-success').classList.add('hidden');
+  const sendBtn = document.getElementById('reset-send-btn');
+  sendBtn.disabled = false;
+  sendBtn.textContent = 'Envoyer le lien de réinitialisation';
+
+  authMainView.classList.add('hidden');
+  authResetView.classList.remove('hidden');
+});
+
+/* --- Retour vers la vue principale --- */
+document.getElementById('reset-back-btn').addEventListener('click', () => {
+  authResetView.classList.add('hidden');
+  authMainView.classList.remove('hidden');
+});
+
+/* --- Envoi de l'email de réinitialisation --- */
+document.getElementById('reset-send-btn').addEventListener('click', async () => {
+  const email     = document.getElementById('reset-email').value.trim();
+  const errorEl   = document.getElementById('reset-error');
+  const successEl = document.getElementById('reset-success');
+  const sendBtn   = document.getElementById('reset-send-btn');
+
+  errorEl.classList.add('hidden');
+  successEl.classList.add('hidden');
+
+  if (!email) {
+    errorEl.textContent = 'Veuillez saisir votre adresse email.';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  sendBtn.disabled    = true;
+  sendBtn.textContent = '…';
+
+  try {
+    await auth.sendPasswordResetEmail(email);
+    successEl.textContent = '✅ Email envoyé ! Vérifiez votre boîte de réception (et vos spams).';
+    successEl.classList.remove('hidden');
+    sendBtn.textContent = 'Email envoyé ✓';
+  } catch (err) {
+    errorEl.textContent = translateFirebaseError(err.code);
+    errorEl.classList.remove('hidden');
+    sendBtn.disabled    = false;
+    sendBtn.textContent = 'Envoyer le lien de réinitialisation';
   }
 });
