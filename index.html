@@ -103,6 +103,14 @@
         </button>
       </div>
 
+      <!-- Bouton Panel Admin (visible uniquement pour le compte admin) -->
+      <div class="sidebar-admin-wrapper hidden" id="sidebar-admin-wrapper">
+        <button id="admin-panel-btn" class="sidebar-admin-btn">
+          <span>⚙️</span>
+          <span>Panel Admin</span>
+        </button>
+      </div>
+
       <!-- Navigation modules/séances (masquée si pending) -->
       <nav id="course-nav" class="course-nav hidden" aria-label="Plan de cours"></nav>
 
@@ -129,6 +137,28 @@
         </button>
         <div class="main-header-title" id="main-header-title">Intelligence Artificielle &amp; Cybersécurité</div>
       </header>
+
+      <!-- ======================================================
+           TABLEAU DE BORD ADMINISTRATEUR
+           Affiché à la place de lesson-view quand l'admin clique sur "Panel Admin"
+      ====================================================== -->
+      <div id="admin-panel" class="admin-panel hidden">
+
+        <div class="admin-header">
+          <div class="admin-header-text">
+            <h1 class="admin-title">⚙️ Tableau de bord</h1>
+            <p class="admin-subtitle">Gérez les accès et la progression de vos élèves en temps réel.</p>
+          </div>
+          <!-- Cartes de statistiques globales -->
+          <div id="admin-stats" class="admin-stats"></div>
+        </div>
+
+        <!-- Tableau des utilisateurs (injecté par app.js) -->
+        <div id="users-table-wrapper" class="users-table-wrapper">
+          <p class="admin-loading">Chargement des élèves…</p>
+        </div>
+
+      </div><!-- /admin-panel -->
 
       <!-- Écran "inscription en attente" (status: pending) -->
       <div id="pending-screen" class="pending-screen hidden">
