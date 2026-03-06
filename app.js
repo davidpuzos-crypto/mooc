@@ -320,6 +320,7 @@ function showPlatform() {
   /* Reconstruire la nav (reflète les nouvelles séances débloquées par l'admin) */
   buildNav();
   updateProgressBar();
+  updateCertificate();
   /* (Ré)attacher le CTA de la homepage */
   const startBtn = document.getElementById('start-btn');
   if (startBtn) {
@@ -504,6 +505,10 @@ function refreshNavState() {
   });
 
   homeBtn.classList.toggle('active', currentSessionId === null);
+
+  /* Scroll automatique vers la séance active dans la sidebar */
+  const activeBtn = courseNav.querySelector('.session-btn.active');
+  if (activeBtn) activeBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
 /* ============================================================
@@ -566,6 +571,11 @@ function buildLessonHTML(module, session) {
   /* Le bouton est grisé par défaut si une évaluation est requise (et pas encore complétée) */
   const needsGate   = !isCompleted && ev !== null;
 
+  /* Numéro de la séance dans la liste plate */
+  const allSessions = allSessionsFlat();
+  const sessionNum  = allSessions.findIndex(s => s.id === session.id) + 1;
+  const allCount    = allSessions.length;
+
   /* ── Fil d'Ariane + Titre ── */
   let html = `
     <div class="lesson-breadcrumb">
@@ -574,6 +584,10 @@ function buildLessonHTML(module, session) {
       <span>${session.title}</span>
     </div>
     <h1 class="lesson-title">${session.title}</h1>
+    <div class="lesson-meta">
+      <span class="session-badge">Séance ${sessionNum} / ${allCount}</span>
+      ${isCompleted ? '<span class="session-badge" style="background:rgba(34,197,94,0.1);color:#16a34a;">✅ Terminée</span>' : ''}
+    </div>
 
     <!-- Onglets de navigation -->
     <div class="lesson-tabs" role="tablist">
@@ -612,6 +626,14 @@ function buildLessonHTML(module, session) {
     html += `</div>`;
   }
 
+  /* Notes personnelles */
+  html += `
+    <div class="session-notes">
+      <label class="notes-label" for="session-notes-input">🗒️ Mes notes (sauvegardées localement)</label>
+      <textarea id="session-notes-input" class="notes-textarea"
+        placeholder="Écrivez vos notes, idées ou questions ici…"></textarea>
+    </div>`;
+
   html += `</div><!-- /tab-cours -->
 
     <!-- ── Onglet Évaluation ── -->
@@ -635,7 +657,7 @@ function buildLessonHTML(module, session) {
   html += `
     <hr style="border:none;border-top:1px solid rgba(0,0,0,0.07);margin:32px 0;" />
     <div class="complete-btn-wrapper">
-      <button id="complete-btn" class="complete-btn"
+      <button id="complete-btn" class="complete-btn${needsGate && !isCompleted ? ' needs-gate' : ''}"
         ${isCompleted || needsGate ? 'disabled' : ''}>
         ${isCompleted ? '✅ Séance terminée !' : '✅ Marquer cette séance comme terminée'}
       </button>
@@ -756,6 +778,20 @@ function initLessonEvents(session) {
   if (nextBtn && next) {
     nextBtn.addEventListener('click', () => loadSession(next.id));
   }
+
+  /* ── Notes personnelles — chargement + auto-sauvegarde (localStorage) ── */
+  const notesInput = document.getElementById('session-notes-input');
+  if (notesInput) {
+    const storageKey = `tisselia_note_${session.id}`;
+    notesInput.value = localStorage.getItem(storageKey) || '';
+    let saveTimer;
+    notesInput.addEventListener('input', () => {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        localStorage.setItem(storageKey, notesInput.value);
+      }, 800);
+    });
+  }
 }
 
 /**
@@ -831,6 +867,49 @@ function launchConfetti() {
 }
 
 /* ============================================================
+   14a. TOAST — Notifications légères
+   ============================================================ */
+
+let toastContainer = null;
+
+function showToast(message, type = 'success') {
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.className = 'toast-container';
+    document.body.appendChild(toastContainer);
+  }
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  toastContainer.appendChild(toast);
+
+  /* Force reflow then animate in */
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => toast.classList.add('toast-visible'));
+  });
+
+  setTimeout(() => {
+    toast.classList.remove('toast-visible');
+    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+  }, 3500);
+}
+
+/* ============================================================
+   14b. CERTIFICATE — Bannière de complétion
+   ============================================================ */
+
+function updateCertificate() {
+  const banner = document.getElementById('certificate-banner');
+  if (!banner) return;
+  const total = totalSessions();
+  if (total > 0 && completedSessions.size >= total) {
+    banner.classList.remove('hidden');
+  } else {
+    banner.classList.add('hidden');
+  }
+}
+
+/* ============================================================
    14. PROGRESSION — Marquer comme terminée (Firestore)
    ============================================================ */
 
@@ -840,6 +919,8 @@ async function markSessionComplete(sessionId, completeBtn, nextBtn) {
   completeBtn.disabled = true;
   completeBtn.textContent = '✅ Séance terminée !';
   launchConfetti();
+  showToast('🎉 Séance validée — bravo !');
+  updateCertificate();
 
   const next = nextSession(sessionId);
   if (next && nextBtn) nextBtn.classList.add('visible');
@@ -859,6 +940,8 @@ async function markSessionComplete(sessionId, completeBtn, nextBtn) {
     completeBtn.disabled = false;
     completeBtn.textContent = '✅ Marquer cette séance comme terminée';
     if (nextBtn) nextBtn.classList.remove('visible');
+    showToast('❌ Erreur de sauvegarde — réessayez.', 'error');
+    updateCertificate();
     refreshNavState();
     updateProgressBar();
   }
@@ -1184,6 +1267,25 @@ document.getElementById('forgot-password-btn').addEventListener('click', () => {
 document.getElementById('reset-back-btn').addEventListener('click', () => {
   authResetView.classList.add('hidden');
   authMainView.classList.remove('hidden');
+});
+
+/* ============================================================
+   22. NAVIGATION AU CLAVIER — Flèches ← / →
+   ============================================================ */
+
+document.addEventListener('keydown', (e) => {
+  /* Ignorer si focus sur un champ de saisie */
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  if (!currentSessionId) return;
+
+  const unlocked = allSessionsFlat().filter(s => isSessionUnlocked(s.id));
+  const idx      = unlocked.findIndex(s => s.id === currentSessionId);
+  if (idx === -1) return;
+
+  if (e.key === 'ArrowLeft'  && idx > 0)                    loadSession(unlocked[idx - 1].id);
+  if (e.key === 'ArrowRight' && idx < unlocked.length - 1)  loadSession(unlocked[idx + 1].id);
 });
 
 /* --- Envoi de l'email de réinitialisation --- */
