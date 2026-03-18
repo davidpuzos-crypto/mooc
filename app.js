@@ -94,6 +94,8 @@ const hamburgerBtn       = document.getElementById('hamburger-btn');
 const sidebar            = document.getElementById('sidebar');
 const sidebarOverlay     = document.getElementById('sidebar-overlay');
 const sidebarCloseBtn    = document.getElementById('sidebar-close-btn');
+const appWrapper         = document.getElementById('app-wrapper');
+const landingPage        = document.getElementById('landing-page');
 
 /* ============================================================
    4. AUTH UI — Helpers d'interface
@@ -217,6 +219,8 @@ auth.onAuthStateChanged((user) => {
     /* Utilisateur connecté */
     currentUser = user;
     hideAuthOverlay();
+    hideLandingPage();
+    appWrapper.classList.remove('hidden');
     userEmailDisplay.textContent = user.email;
     sidebarFooter.classList.remove('hidden');
 
@@ -240,8 +244,9 @@ auth.onAuthStateChanged((user) => {
     sidebarFooter.classList.add('hidden');
     sidebarAdminWrapper.classList.add('hidden');
     adminPanel.classList.add('hidden');
+    hideAuthOverlay();
     hidePlatform();
-    showAuthOverlay();
+    showLandingPage();
   }
 });
 
@@ -344,6 +349,17 @@ function hidePlatform() {
   courseNav.classList.add('hidden');
   courseNav.innerHTML = '';
   currentSessionId = null;
+  appWrapper.classList.add('hidden');
+}
+
+function showLandingPage() {
+  landingPage.classList.remove('hidden');
+  document.body.classList.remove('platform-active');
+}
+
+function hideLandingPage() {
+  landingPage.classList.add('hidden');
+  document.body.classList.add('platform-active');
 }
 
 /* ============================================================
@@ -1287,6 +1303,62 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft'  && idx > 0)                    loadSession(unlocked[idx - 1].id);
   if (e.key === 'ArrowRight' && idx < unlocked.length - 1)  loadSession(unlocked[idx + 1].id);
 });
+
+/* ============================================================
+   23. LANDING PAGE — Interactions & Scroll Reveal
+   ============================================================ */
+
+/* --- Fermer l'overlay (retour à la landing) --- */
+document.getElementById('auth-close-btn').addEventListener('click', () => {
+  hideAuthOverlay();
+  setAuthMode(false); /* reset au mode connexion pour la prochaine ouverture */
+});
+
+/* Ouvrir en mode Connexion */
+document.getElementById('landing-signin-btn').addEventListener('click', () => {
+  setAuthMode(false);
+  showAuthOverlay();
+});
+
+/* Ouvrir en mode Inscription */
+function openSignup() { setAuthMode(true); showAuthOverlay(); }
+document.getElementById('landing-signup-btn').addEventListener('click', openSignup);
+document.getElementById('hero-signup-btn').addEventListener('click', openSignup);
+document.getElementById('footer-signup-btn').addEventListener('click', openSignup);
+
+/* --- Menu mobile landing page --- */
+const lpHamburger = document.getElementById('lp-hamburger');
+const lpNav       = document.getElementById('lp-nav');
+if (lpHamburger && lpNav) {
+  lpHamburger.addEventListener('click', () => {
+    const isOpen = lpNav.classList.toggle('open');
+    lpHamburger.setAttribute('aria-expanded', String(isOpen));
+  });
+  /* Fermer le menu si on clique sur un lien */
+  lpNav.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      lpNav.classList.remove('open');
+      lpHamburger.setAttribute('aria-expanded', 'false');
+    });
+  });
+}
+
+/* --- Scroll : header shadow + IntersectionObserver reveal --- */
+const lpHeader = document.getElementById('lp-header');
+window.addEventListener('scroll', () => {
+  if (lpHeader) lpHeader.classList.toggle('scrolled', window.scrollY > 30);
+}, { passive: true });
+
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('in-view');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
 /* --- Envoi de l'email de réinitialisation --- */
 document.getElementById('reset-send-btn').addEventListener('click', async () => {
