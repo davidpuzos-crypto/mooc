@@ -336,6 +336,7 @@ function showPlatform() {
   buildNav();
   updateProgressBar();
   updateCertificate();
+  updateLessonNavButtons(); /* met à jour le bouton "suivante" si une séance est ouverte */
   /* (Ré)attacher le CTA de la homepage */
   const startBtn = document.getElementById('start-btn');
   if (startBtn) {
@@ -556,11 +557,52 @@ function nextSession(sessionId) {
   return idx !== -1 && idx + 1 < all.length ? all[idx + 1] : null;
 }
 
+/**
+ * Retourne le HTML du bloc "séance suivante" selon l'état courant.
+ * - Séance non terminée       → vide (le bloc n'existe pas encore)
+ * - Séance terminée + suivante débloquée  → bouton "Séance suivante →"
+ * - Séance terminée + suivante verrouillée → bloc "Bientôt disponible"
+ * - Dernière séance terminée  → vide (la bannière certificat prend le relais)
+ */
+function buildNextAreaHTML(isCompleted, next) {
+  if (!isCompleted || !next) return '';
+  if (isSessionUnlocked(next.id)) {
+    return `<button id="next-btn" class="next-btn visible">
+      Séance suivante : ${next.title} →
+    </button>`;
+  }
+  return `<div class="coming-soon-block">
+    🎉 Bravo, vous êtes à jour !
+    La suite de la formation sera débloquée très prochainement.
+  </div>`;
+}
+
+/**
+ * Met à jour dynamiquement la zone "séance suivante" sans recharger la séance.
+ * Appelée après chaque changement de progression ou de maxSessionUnlocked.
+ */
+function updateLessonNavButtons() {
+  if (!currentSessionId) return;
+  const nextArea = document.getElementById('session-next-area');
+  if (!nextArea) return;
+  const found = findSession(currentSessionId);
+  if (!found) return;
+  const { session } = found;
+  const isCompleted = completedSessions.has(session.id);
+  const next        = nextSession(session.id);
+  nextArea.innerHTML = buildNextAreaHTML(isCompleted, next);
+  const nextBtn = document.getElementById('next-btn');
+  if (nextBtn && next) {
+    nextBtn.addEventListener('click', () => loadSession(next.id));
+  }
+}
+
 function loadSession(sessionId) {
   const found = findSession(sessionId);
   if (!found) return;
 
-  hideAdminPanel(); /* ferme le panel admin si actif */
+  /* Sécurité : refuser l'accès si la séance n'est pas débloquée */
+  if (!isSessionUnlocked(sessionId)) return;
 
   const { module, session } = found;
   currentSessionId = sessionId;
@@ -687,11 +729,7 @@ function buildLessonHTML(module, session) {
         ${isCompleted || needsGate ? 'disabled' : ''}>
         ${isCompleted ? '✅ Séance terminée !' : '✅ Marquer cette séance comme terminée'}
       </button>
-      <button id="next-btn"
-        class="next-btn${isCompleted && next ? ' visible' : ''}"
-        ${next ? '' : 'style="display:none"'}>
-        Séance suivante : ${next?.title || ''} →
-      </button>
+      <div id="session-next-area">${buildNextAreaHTML(isCompleted, next)}</div>
     </div>
   </div><!-- /tab-evaluation -->`;
 
@@ -760,8 +798,13 @@ function initLessonEvents(session) {
   const ev          = session.evaluation || null;
   const isCompleted = completedSessions.has(session.id);
   const completeBtn = document.getElementById('complete-btn');
-  const nextBtn     = document.getElementById('next-btn');
   const next        = nextSession(session.id);
+
+  /* Attacher le listener sur le bouton "suivante" s'il est présent dès le chargement */
+  const nextBtnEl = document.getElementById('next-btn');
+  if (nextBtnEl && next) {
+    nextBtnEl.addEventListener('click', () => loadSession(next.id));
+  }
 
   /* ── Onglets Cours / Évaluation ── */
   lessonContent.querySelectorAll('.lesson-tab').forEach(tab => {
@@ -797,12 +840,7 @@ function initLessonEvents(session) {
   /* ── Bouton "Marquer comme terminée" ── */
   if (completeBtn && !isCompleted) {
     completeBtn.addEventListener('click', () =>
-      markSessionComplete(session.id, completeBtn, nextBtn));
-  }
-
-  /* ── Bouton "Séance suivante" ── */
-  if (nextBtn && next) {
-    nextBtn.addEventListener('click', () => loadSession(next.id));
+      markSessionComplete(session.id, completeBtn));
   }
 
   /* ── Notes personnelles — chargement + auto-sauvegarde (localStorage) ── */
@@ -939,7 +977,7 @@ function updateCertificate() {
    14. PROGRESSION — Marquer comme terminée (Firestore)
    ============================================================ */
 
-async function markSessionComplete(sessionId, completeBtn, nextBtn) {
+async function markSessionComplete(sessionId, completeBtn) {
   /* Optimistic update — feedback immédiat sans attendre Firestore */
   completedSessions.add(sessionId);
   completeBtn.disabled = true;
@@ -947,9 +985,7 @@ async function markSessionComplete(sessionId, completeBtn, nextBtn) {
   launchConfetti();
   showToast('🎉 Séance validée — bravo !');
   updateCertificate();
-
-  const next = nextSession(sessionId);
-  if (next && nextBtn) nextBtn.classList.add('visible');
+  updateLessonNavButtons(); /* affiche "suivante" ou "bientôt disponible" */
 
   refreshNavState();
   updateProgressBar();
@@ -965,9 +1001,9 @@ async function markSessionComplete(sessionId, completeBtn, nextBtn) {
     completedSessions.delete(sessionId);
     completeBtn.disabled = false;
     completeBtn.textContent = '✅ Marquer cette séance comme terminée';
-    if (nextBtn) nextBtn.classList.remove('visible');
     showToast('❌ Erreur de sauvegarde — réessayez.', 'error');
     updateCertificate();
+    updateLessonNavButtons(); /* remet la zone à vide (pas encore terminée) */
     refreshNavState();
     updateProgressBar();
   }
