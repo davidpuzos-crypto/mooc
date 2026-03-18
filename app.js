@@ -386,9 +386,14 @@ function allSessionsFlat() {
  * Une séance N (index 1-based) est débloquée si ET SEULEMENT SI :
  *  1. L'admin a défini maxSessionUnlocked >= N
  *  2. La séance N-1 est dans completedSessions (sauf pour la séance 1)
+ *
+ *  Exception : les admins ont accès à toutes les séances sans restriction.
  */
 function isSessionUnlocked(sessionId) {
   if (!userDoc || userDoc.status !== 'approved') return false;
+
+  /* Passe-partout admin : accès illimité à toutes les séances */
+  if (userDoc.role === 'admin') return true;
 
   const all = allSessionsFlat();
   const idx = all.findIndex(s => s.id === sessionId);
@@ -817,6 +822,12 @@ function initLessonEvents(session) {
       tab.classList.add('active');
       tab.setAttribute('aria-selected', 'true');
       document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
+
+      /* Re-vérifier l'état du bouton "Valider" quand l'onglet Évaluation devient visible.
+         Certains navigateurs ne déclenchent pas l'event "change" sur des inputs cachés. */
+      if (tab.dataset.tab === 'evaluation' && ev?.type === 'qcm') {
+        checkAllAnsweredFor(ev.questions);
+      }
     });
   });
 
@@ -863,14 +874,21 @@ function initLessonEvents(session) {
  * @param {Array}    questions  - tableau de questions
  * @param {Function} onValidated - callback appelé après validation (active le bouton Terminée)
  */
+/**
+ * Vérifie si toutes les questions ont une réponse sélectionnée,
+ * puis active/désactive le bouton "Valider mes réponses" en conséquence.
+ * Exposée à l'extérieur pour être appelée à l'ouverture de l'onglet.
+ */
+function checkAllAnsweredFor(questions) {
+  const validateBtn = document.getElementById('quiz-validate-btn');
+  if (!validateBtn) return;
+  validateBtn.disabled = !questions.every(q =>
+    document.querySelector(`input[name="q_${q.id}"]:checked`));
+}
+
 function initQuizEvents(questions, onValidated) {
   const validateBtn = document.getElementById('quiz-validate-btn');
   if (!validateBtn) return;
-
-  function checkAllAnswered() {
-    validateBtn.disabled = !questions.every(q =>
-      document.querySelector(`input[name="q_${q.id}"]:checked`));
-  }
 
   questions.forEach(q => {
     document.querySelectorAll(`input[name="q_${q.id}"]`).forEach(radio => {
@@ -878,7 +896,7 @@ function initQuizEvents(questions, onValidated) {
         document.querySelectorAll(`input[name="q_${q.id}"]`).forEach(r =>
           r.closest('.quiz-option').classList.remove('selected'));
         radio.closest('.quiz-option').classList.add('selected');
-        checkAllAnswered();
+        checkAllAnsweredFor(questions);
       });
     });
   });
