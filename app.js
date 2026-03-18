@@ -1169,22 +1169,22 @@ function renderDashboard() {
 
     kpisEl.innerHTML = `
       <div class="dash-kpi">
-        <span class="dash-kpi-value">${done}<span class="dash-kpi-total"> / ${total}</span></span>
         <span class="dash-kpi-label">Séances terminées</span>
+        <span class="dash-kpi-value">${done}<span class="dash-kpi-total"> / ${total}</span></span>
         <div class="dash-kpi-bar"><div style="width:${pct}%"></div></div>
       </div>
       <div class="dash-kpi ${avg !== null ? (avg >= 75 ? 'kpi-pass' : 'kpi-fail') : ''}">
+        <span class="dash-kpi-label">Moyenne aux quiz</span>
         <span class="dash-kpi-value">${avg !== null ? avg + '&nbsp;%' : '—'}</span>
-        <span class="dash-kpi-label">Moyenne des quiz</span>
         ${avg !== null ? `<div class="dash-kpi-bar kpi-bar-score"><div style="width:${avg}%"></div></div>` : ''}
       </div>
       <div class="dash-kpi">
-        <span class="dash-kpi-value">${quizDone}<span class="dash-kpi-total"> / ${total}</span></span>
         <span class="dash-kpi-label">Quiz complétés</span>
+        <span class="dash-kpi-value">${quizDone}<span class="dash-kpi-total"> / ${total}</span></span>
       </div>
       <div class="dash-kpi dash-kpi-next">
         <span class="dash-kpi-label">Prochaine séance</span>
-        <span class="dash-next-title">${nextSess ? nextSess.title : done >= total ? '🎉 Formation terminée !' : '🔒 Aucune séance disponible'}</span>
+        <span class="dash-next-title">${nextSess ? nextSess.title : done >= total ? '🎉 Formation terminée !' : '— Aucune séance disponible'}</span>
         ${nextSess ? `<button class="dash-next-btn" data-session-id="${nextSess.id}">Commencer →</button>` : ''}
       </div>`;
 
@@ -1465,6 +1465,12 @@ sidebarCloseBtn.addEventListener('click', closeSidebarMobile);
 sidebarOverlay.addEventListener('click', closeSidebarMobile);
 
 homeBtn.addEventListener('click', () => {
+  closeSidebarMobile();
+  showHomePage();
+});
+
+/* Logo sidebar → retour au tableau de bord */
+document.querySelector('.sidebar .logo').addEventListener('click', () => {
   closeSidebarMobile();
   showHomePage();
 });
