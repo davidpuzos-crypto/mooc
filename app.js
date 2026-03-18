@@ -50,7 +50,6 @@ let unsubscribeUsers  = null;   // cleanup du listener Firestore (collection use
 let currentSessionId  = null;   // ID de la séance actuellement affichée
 let completedSessions = new Set(); // miroir local de userDoc.completedSessions
 let adminPanelActive  = false;  // true quand le tableau de bord admin est affiché
-let activeQuizQuestions = null; // questions du quiz en cours (null si pas de quiz actif)
 
 /* ============================================================
    3. RÉFÉRENCES DOM
@@ -634,18 +633,6 @@ function loadSession(sessionId) {
 
   refreshNavState();
   lessonContent.innerHTML = buildLessonHTML(module, session);
-
-  /* ── Quiz : initialisation après injection HTML ── */
-  const ev = session.evaluation;
-  if (!completedSessions.has(session.id) && ev?.type === 'qcm') {
-    initQuizEvents(ev.questions, () => {
-      const btn = document.getElementById('complete-btn');
-      if (btn) btn.disabled = false;
-    });
-  } else {
-    activeQuizQuestions = null; /* pas de quiz actif sur cette séance */
-  }
-
   initLessonEvents(session);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -827,11 +814,15 @@ function initLessonEvents(session) {
       tab.classList.add('active');
       tab.setAttribute('aria-selected', 'true');
       document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
+
+      /* QCM : les radios sont maintenant VISIBLES → attacher les listeners ici */
+      if (tab.dataset.tab === 'evaluation' && ev?.type === 'qcm' && !isCompleted) {
+        attachQuizListeners(ev.questions, () => { completeBtn.disabled = false; });
+      }
     });
   });
 
   /* ── Logique d'évaluation (uniquement si la séance n'est pas déjà terminée) ── */
-  /* Note : le cas "qcm" est géré directement dans loadSession juste après innerHTML. */
   if (!isCompleted && ev?.type === 'email') {
     /* Email : active le bouton "Terminée" quand la case est cochée */
     const checkbox = document.getElementById('confirm-checkbox');
@@ -851,29 +842,38 @@ function initLessonEvents(session) {
 }
 
 /**
- * Compte les questions avec au moins une option cochée (.checked sur le nœud radio)
- * et active/désactive le bouton "Valider mes réponses" en conséquence.
+ * Attache les listeners radio QCM au moment où l'onglet Évaluation
+ * devient visible. Les radios sont dans le DOM ET affichés à cet instant —
+ * aucun risque de display:none bloquant les événements.
+ *
+ * Utilise validateBtn.dataset.ready pour éviter le double-attachement si
+ * l'utilisateur bascule plusieurs fois entre les onglets.
  */
-function checkAllAnsweredFor(questions) {
+function attachQuizListeners(questions, onValidated) {
   const validateBtn = document.getElementById('quiz-validate-btn');
-  if (!validateBtn) return;
-  const answeredCount = questions.filter(q =>
-    Array.from(document.querySelectorAll(`input[name="q_${q.id}"]`))
-      .some(r => r.checked)
-  ).length;
-  validateBtn.disabled = (answeredCount < questions.length);
-}
+  if (!validateBtn || validateBtn.dataset.ready) return;
+  validateBtn.dataset.ready = '1';
 
-/**
- * Initialise le quiz : stocke les questions dans activeQuizQuestions et branche
- * le bouton "Valider". La détection des clics radio est gérée par le listener
- * délégué sur lessonContent (voir section 12b), ce qui évite tout problème
- * lié à l'état display:none du panneau Évaluation lors de l'attachement.
- */
-function initQuizEvents(questions, onValidated) {
-  activeQuizQuestions = questions;
-  const validateBtn = document.getElementById('quiz-validate-btn');
-  if (!validateBtn) return;
+  function checkAll() {
+    const allAnswered = questions.every(q =>
+      Array.from(lessonContent.querySelectorAll(`input[name="q_${q.id}"]`))
+        .some(r => r.checked)
+    );
+    validateBtn.disabled = !allAnswered;
+  }
+
+  questions.forEach(q => {
+    lessonContent.querySelectorAll(`input[name="q_${q.id}"]`).forEach(radio => {
+      radio.addEventListener('change', () => {
+        /* Mise à jour visuelle */
+        lessonContent.querySelectorAll(`input[name="${radio.name}"]`).forEach(r =>
+          r.closest('.quiz-option')?.classList.remove('selected'));
+        radio.closest('.quiz-option')?.classList.add('selected');
+        checkAll();
+      });
+    });
+  });
+
   validateBtn.addEventListener('click', () =>
     validateQuiz(questions, validateBtn, onValidated));
 }
@@ -907,30 +907,6 @@ function validateQuiz(questions, validateBtn, onValidated) {
   validateBtn.textContent = 'Réponses validées ✓';
   if (onValidated) onValidated();
 }
-
-/* ============================================================
-   12b. QUIZ — Listener délégué (unique et permanent)
-   Attaché sur lessonContent (toujours présent dans le DOM).
-   Attrape les événements 'change' des radios qui remontent,
-   même si le panneau #tab-evaluation était caché lors du chargement.
-   ============================================================ */
-
-lessonContent.addEventListener('change', (e) => {
-  if (!activeQuizQuestions) return;
-  if (e.target.type !== 'radio') return;
-
-  const name = e.target.getAttribute('name');
-  if (!name || !name.startsWith('q_')) return;
-
-  /* Mise à jour visuelle : retire .selected de tous les choix du groupe,
-     puis ajoute .selected sur le choix coché */
-  lessonContent.querySelectorAll(`input[name="${name}"]`).forEach(r =>
-    r.closest('.quiz-option')?.classList.remove('selected'));
-  e.target.closest('.quiz-option')?.classList.add('selected');
-
-  /* Active le bouton Valider dès que toutes les questions ont une réponse */
-  checkAllAnsweredFor(activeQuizQuestions);
-});
 
 /* ============================================================
    13. GAMIFICATION — Confettis
