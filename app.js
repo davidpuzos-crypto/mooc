@@ -713,7 +713,8 @@ function buildLessonHTML(module, session) {
         <p>L'évaluation de cette séance sera disponible prochainement.</p>
       </div>`;
   } else if (ev.type === 'qcm') {
-    html += buildQcmHTML(ev.questions);
+    const savedScore = userDoc?.quizScores?.[session.id] || null;
+    html += buildQcmHTML(ev.questions, savedScore);
   } else if (ev.type === 'email') {
     html += buildEmailEvalHTML();
   }
@@ -734,28 +735,43 @@ function buildLessonHTML(module, session) {
 }
 
 /** HTML pour une évaluation de type QCM. */
-function buildQcmHTML(questions) {
+function buildQcmHTML(questions, savedScore) {
+  const prevHtml = savedScore
+    ? `<div class="quiz-prev-score">
+        ${savedScore.pct >= 75 ? '✅' : '⚠️'} Meilleur score : <strong>${savedScore.score}/${savedScore.total} (${savedScore.pct}&nbsp;%)</strong>
+       </div>`
+    : '';
+
   let html = `
     <div class="quiz-section" id="quiz-section">
-      <h2 class="quiz-title">🧠 Quiz de la séance</h2>`;
+      <h2 class="quiz-title">🧠 Quiz de la séance</h2>
+      <p class="quiz-subtitle">Répondez à toutes les questions, puis validez. Score minimum requis : 75 %.</p>
+      ${prevHtml}
+      <div class="quiz-score-banner hidden" id="quiz-score-banner"></div>`;
 
   questions.forEach((q, idx) => {
     html += `
-      <div class="quiz-question-block" data-question-id="${q.id}">
+      <div class="quiz-question-block" data-qid="${q.id}">
         <p class="quiz-question-text">${idx + 1}. ${q.question}</p>
         <div class="quiz-options" role="radiogroup">`;
     q.options.forEach(opt => {
-      html += `<label class="quiz-option" data-option-id="${opt.id}">
-        <input type="radio" name="q_${q.id}" value="${opt.id}" />
-        ${opt.text}</label>`;
+      html += `
+          <div class="quiz-option" data-qid="${q.id}" data-oid="${opt.id}" tabindex="0" role="radio" aria-checked="false">
+            <span class="quiz-opt-marker"></span>
+            <span>${opt.text}</span>
+          </div>`;
     });
-    html += `</div><div class="quiz-feedback" id="feedback_${q.id}"></div></div>`;
+    html += `
+        </div>
+        <div class="quiz-feedback hidden" id="feedback_${q.id}"></div>
+      </div>`;
   });
 
   html += `
-      <button class="quiz-validate-btn" id="quiz-validate-btn" disabled>
-        Valider mes réponses
-      </button>
+      <div class="quiz-actions">
+        <button class="quiz-validate-btn" id="quiz-validate-btn" disabled>Valider mes réponses</button>
+        <button class="quiz-retry-btn hidden" id="quiz-retry-btn">🔄 Réessayer</button>
+      </div>
     </div>`;
   return html;
 }
@@ -815,9 +831,13 @@ function initLessonEvents(session) {
       tab.setAttribute('aria-selected', 'true');
       document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
 
-      /* QCM : les radios sont maintenant VISIBLES → attacher les listeners ici */
-      if (tab.dataset.tab === 'evaluation' && ev?.type === 'qcm' && !isCompleted) {
-        attachQuizListeners(ev.questions, () => { completeBtn.disabled = false; });
+      /* QCM : options visibles → initialiser l'interactivité */
+      if (tab.dataset.tab === 'evaluation' && ev?.type === 'qcm') {
+        initQuizInteraction(ev.questions, session.id, () => {
+          if (!completedSessions.has(session.id)) {
+            markSessionComplete(session.id, completeBtn);
+          }
+        });
       }
     });
   });
@@ -842,70 +862,120 @@ function initLessonEvents(session) {
 }
 
 /**
- * Attache les listeners radio QCM au moment où l'onglet Évaluation
- * devient visible. Les radios sont dans le DOM ET affichés à cet instant —
- * aucun risque de display:none bloquant les événements.
- *
- * Utilise validateBtn.dataset.ready pour éviter le double-attachement si
- * l'utilisateur bascule plusieurs fois entre les onglets.
+ * Gestion complète du QCM — sélection par clic sur div, calcul du score,
+ * sauvegarde Firestore, retake illimité.
+ * Utilise section.dataset.quizReady pour éviter le double-attachement.
  */
-function attachQuizListeners(questions, onValidated) {
-  const validateBtn = document.getElementById('quiz-validate-btn');
-  if (!validateBtn || validateBtn.dataset.ready) return;
-  validateBtn.dataset.ready = '1';
+function initQuizInteraction(questions, sessionId, onPassed) {
+  const section = document.getElementById('quiz-section');
+  if (!section || section.dataset.quizReady) return;
+  section.dataset.quizReady = '1';
 
-  function checkAll() {
-    const allAnswered = questions.every(q =>
-      Array.from(lessonContent.querySelectorAll(`input[name="q_${q.id}"]`))
-        .some(r => r.checked)
-    );
-    validateBtn.disabled = !allAnswered;
+  const userAnswers = {};
+  const validateBtn = document.getElementById('quiz-validate-btn');
+  const retryBtn    = document.getElementById('quiz-retry-btn');
+  const scoreBanner = document.getElementById('quiz-score-banner');
+
+  /* ── Sélection d'une option ── */
+  function selectOption(qid, oid) {
+    section.querySelectorAll(`.quiz-option[data-qid="${qid}"]`).forEach(el => {
+      el.classList.remove('selected');
+      el.setAttribute('aria-checked', 'false');
+    });
+    const chosen = section.querySelector(`.quiz-option[data-qid="${qid}"][data-oid="${oid}"]`);
+    if (chosen) { chosen.classList.add('selected'); chosen.setAttribute('aria-checked', 'true'); }
+    userAnswers[qid] = oid;
+    validateBtn.disabled = (Object.keys(userAnswers).length < questions.length);
   }
 
-  questions.forEach(q => {
-    lessonContent.querySelectorAll(`input[name="q_${q.id}"]`).forEach(radio => {
-      radio.addEventListener('change', () => {
-        /* Mise à jour visuelle */
-        lessonContent.querySelectorAll(`input[name="${radio.name}"]`).forEach(r =>
-          r.closest('.quiz-option')?.classList.remove('selected'));
-        radio.closest('.quiz-option')?.classList.add('selected');
-        checkAll();
-      });
-    });
+  /* ── Délégation de clic sur toute la section ── */
+  section.addEventListener('click', e => {
+    const opt = e.target.closest('.quiz-option:not(.locked)');
+    if (opt) selectOption(opt.dataset.qid, opt.dataset.oid);
   });
 
-  validateBtn.addEventListener('click', () =>
-    validateQuiz(questions, validateBtn, onValidated));
-}
+  /* ── Accessibilité clavier (Espace / Entrée) ── */
+  section.addEventListener('keydown', e => {
+    if (e.key !== ' ' && e.key !== 'Enter') return;
+    const opt = e.target.closest('.quiz-option:not(.locked)');
+    if (!opt) return;
+    e.preventDefault();
+    selectOption(opt.dataset.qid, opt.dataset.oid);
+  });
 
-function validateQuiz(questions, validateBtn, onValidated) {
-  questions.forEach(q => {
-    const selected = document.querySelector(`input[name="q_${q.id}"]:checked`);
-    const feedback = document.getElementById(`feedback_${q.id}`);
-    const block    = document.querySelector(`.quiz-question-block[data-question-id="${q.id}"]`);
+  /* ── Validation ── */
+  validateBtn.addEventListener('click', () => {
+    let correct = 0;
 
-    block.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('correct', 'wrong'));
+    questions.forEach(q => {
+      const chosen   = userAnswers[q.id];
+      const block    = section.querySelector(`.quiz-question-block[data-qid="${q.id}"]`);
+      const feedback = document.getElementById(`feedback_${q.id}`);
+      const isRight  = chosen === q.answer;
+      if (isRight) correct++;
 
-    if (!selected) return;
+      /* Verrouiller et coloriser */
+      block.querySelectorAll('.quiz-option').forEach(el => {
+        el.classList.add('locked');
+        if (el.dataset.oid === q.answer) el.classList.add('correct');
+      });
+      const wrongEl = block.querySelector(`.quiz-option[data-oid="${chosen}"]`);
+      if (!isRight && wrongEl) wrongEl.classList.add('wrong');
 
-    const isCorrect = selected.value === q.answer;
-    block.querySelector(`input[value="${q.answer}"]`)?.closest('.quiz-option')?.classList.add('correct');
+      /* Feedback textuel */
+      if (feedback) {
+        feedback.textContent = isRight
+          ? '✅ Bonne réponse !'
+          : "❌ Ce n'est pas la bonne réponse. La bonne réponse est surlignée en vert.";
+        feedback.className = `quiz-feedback ${isRight ? 'correct' : 'wrong'}`;
+      }
+    });
 
-    if (!isCorrect) {
-      selected.closest('.quiz-option').classList.add('wrong');
-      feedback.textContent = "❌ Ce n'est pas la bonne réponse. La réponse correcte est surlignée en vert.";
-      feedback.className = 'quiz-feedback wrong';
-    } else {
-      feedback.textContent = '✅ Bravo, c\'est la bonne réponse !';
-      feedback.className = 'quiz-feedback correct';
+    const total  = questions.length;
+    const pct    = Math.round((correct / total) * 100);
+    const passed = pct >= 75;
+
+    /* Bannière de score */
+    if (scoreBanner) {
+      scoreBanner.innerHTML = passed
+        ? `🎉 <strong>${correct} / ${total} bonnes réponses — ${pct}&nbsp;%</strong> — Félicitations, séance validée !`
+        : `😕 <strong>${correct} / ${total} bonnes réponses — ${pct}&nbsp;%</strong> — Score insuffisant (min.&nbsp;75&nbsp;%). Réessayez !`;
+      scoreBanner.className = `quiz-score-banner ${passed ? 'pass' : 'fail'}`;
     }
 
-    block.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
+    /* Sauvegarder le meilleur score dans Firestore */
+    if (currentUser) {
+      const prev = userDoc?.quizScores?.[sessionId];
+      if (!prev || pct > prev.pct) {
+        db.collection('users').doc(currentUser.uid)
+          .set({ quizScores: { [sessionId]: { score: correct, total, pct } } }, { merge: true })
+          .catch(err => console.warn('Score save failed:', err));
+      }
+    }
+
+    validateBtn.classList.add('hidden');
+    if (retryBtn) retryBtn.classList.remove('hidden');
+    if (passed) onPassed();
   });
 
-  validateBtn.disabled = true;
-  validateBtn.textContent = 'Réponses validées ✓';
-  if (onValidated) onValidated();
+  /* ── Réessayer ── */
+  if (retryBtn) {
+    retryBtn.addEventListener('click', () => {
+      Object.keys(userAnswers).forEach(k => delete userAnswers[k]);
+      section.querySelectorAll('.quiz-option').forEach(el => {
+        el.classList.remove('selected', 'correct', 'wrong', 'locked');
+        el.setAttribute('aria-checked', 'false');
+      });
+      section.querySelectorAll('.quiz-feedback').forEach(el => {
+        el.textContent = '';
+        el.className = 'quiz-feedback hidden';
+      });
+      if (scoreBanner) scoreBanner.className = 'quiz-score-banner hidden';
+      validateBtn.disabled = true;
+      validateBtn.classList.remove('hidden');
+      retryBtn.classList.add('hidden');
+    });
+  }
 }
 
 /* ============================================================
