@@ -633,6 +633,16 @@ function loadSession(sessionId) {
 
   refreshNavState();
   lessonContent.innerHTML = buildLessonHTML(module, session);
+
+  /* ── Quiz : écouteurs attachés immédiatement après l'injection HTML ── */
+  const ev = session.evaluation;
+  if (!completedSessions.has(session.id) && ev?.type === 'qcm') {
+    initQuizEvents(ev.questions, () => {
+      const btn = document.getElementById('complete-btn');
+      if (btn) btn.disabled = false;
+    });
+  }
+
   initLessonEvents(session);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -698,14 +708,6 @@ function buildLessonHTML(module, session) {
     });
     html += `</div>`;
   }
-
-  /* Notes personnelles */
-  html += `
-    <div class="session-notes">
-      <label class="notes-label" for="session-notes-input">🗒️ Mes notes (sauvegardées localement)</label>
-      <textarea id="session-notes-input" class="notes-textarea"
-        placeholder="Écrivez vos notes, idées ou questions ici…"></textarea>
-    </div>`;
 
   html += `</div><!-- /tab-cours -->
 
@@ -822,30 +824,19 @@ function initLessonEvents(session) {
       tab.classList.add('active');
       tab.setAttribute('aria-selected', 'true');
       document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
-
-      /* Re-vérifier l'état du bouton "Valider" quand l'onglet Évaluation devient visible.
-         Certains navigateurs ne déclenchent pas l'event "change" sur des inputs cachés. */
-      if (tab.dataset.tab === 'evaluation' && ev?.type === 'qcm') {
-        checkAllAnsweredFor(ev.questions);
-      }
     });
   });
 
   /* ── Logique d'évaluation (uniquement si la séance n'est pas déjà terminée) ── */
-  if (!isCompleted) {
-    if (ev?.type === 'qcm') {
-      /* QCM : active le bouton "Terminée" après validation du quiz */
-      initQuizEvents(ev.questions, () => { completeBtn.disabled = false; });
-    } else if (ev?.type === 'email') {
-      /* Email : active le bouton "Terminée" quand la case est cochée */
-      const checkbox = document.getElementById('confirm-checkbox');
-      if (checkbox) {
-        checkbox.addEventListener('change', () => {
-          completeBtn.disabled = !checkbox.checked;
-        });
-      }
+  /* Note : le cas "qcm" est géré directement dans loadSession juste après innerHTML. */
+  if (!isCompleted && ev?.type === 'email') {
+    /* Email : active le bouton "Terminée" quand la case est cochée */
+    const checkbox = document.getElementById('confirm-checkbox');
+    if (checkbox) {
+      checkbox.addEventListener('change', () => {
+        completeBtn.disabled = !checkbox.checked;
+      });
     }
-    /* Si evaluation === null : pas de verrou, bouton déjà actif depuis le HTML */
   }
 
   /* ── Bouton "Marquer comme terminée" ── */
@@ -854,49 +845,43 @@ function initLessonEvents(session) {
       markSessionComplete(session.id, completeBtn));
   }
 
-  /* ── Notes personnelles — chargement + auto-sauvegarde (localStorage) ── */
-  const notesInput = document.getElementById('session-notes-input');
-  if (notesInput) {
-    const storageKey = `tisselia_note_${session.id}`;
-    notesInput.value = localStorage.getItem(storageKey) || '';
-    let saveTimer;
-    notesInput.addEventListener('input', () => {
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => {
-        localStorage.setItem(storageKey, notesInput.value);
-      }, 800);
-    });
-  }
 }
 
 /**
- * Initialise les interactions du quiz QCM.
- * @param {Array}    questions  - tableau de questions
- * @param {Function} onValidated - callback appelé après validation (active le bouton Terminée)
- */
-/**
- * Vérifie si toutes les questions ont une réponse sélectionnée,
- * puis active/désactive le bouton "Valider mes réponses" en conséquence.
- * Exposée à l'extérieur pour être appelée à l'ouverture de l'onglet.
+ * Compte les questions avec au moins une option cochée (.checked sur le nœud radio)
+ * et active/désactive le bouton "Valider mes réponses" en conséquence.
  */
 function checkAllAnsweredFor(questions) {
   const validateBtn = document.getElementById('quiz-validate-btn');
   if (!validateBtn) return;
-  validateBtn.disabled = !questions.every(q =>
-    document.querySelector(`input[name="q_${q.id}"]:checked`));
+  const answeredCount = questions.filter(q =>
+    Array.from(document.querySelectorAll(`input[name="q_${q.id}"]`))
+      .some(r => r.checked)
+  ).length;
+  validateBtn.disabled = (answeredCount < questions.length);
 }
 
+/**
+ * Attache les écouteurs sur chaque radio du quiz.
+ * Appelée dans loadSession, juste après l'injection du HTML dans le DOM.
+ */
 function initQuizEvents(questions, onValidated) {
   const validateBtn = document.getElementById('quiz-validate-btn');
   if (!validateBtn) return;
 
   questions.forEach(q => {
-    document.querySelectorAll(`input[name="q_${q.id}"]`).forEach(radio => {
-      radio.addEventListener('change', () => {
-        document.querySelectorAll(`input[name="q_${q.id}"]`).forEach(r =>
-          r.closest('.quiz-option').classList.remove('selected'));
-        radio.closest('.quiz-option').classList.add('selected');
-        checkAllAnsweredFor(questions);
+    const radios = document.querySelectorAll(`input[name="q_${q.id}"]`);
+    radios.forEach(radio => {
+      /* 'change' : changement de valeur dans le groupe radio
+         'click'  : filet de sécurité pour les navigateurs qui tardent à déclencher change */
+      ['change', 'click'].forEach(type => {
+        radio.addEventListener(type, () => {
+          /* Mise à jour visuelle de la sélection */
+          radios.forEach(r => r.closest('.quiz-option')?.classList.remove('selected'));
+          radio.closest('.quiz-option')?.classList.add('selected');
+          /* Vérification du nombre de réponses */
+          checkAllAnsweredFor(questions);
+        });
       });
     });
   });
