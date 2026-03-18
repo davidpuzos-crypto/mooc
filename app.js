@@ -691,15 +691,34 @@ function buildLessonHTML(module, session) {
 
     <!-- Onglets de navigation -->
     <div class="lesson-tabs" role="tablist">
-      <button class="lesson-tab active" data-tab="cours"
-        role="tab" aria-selected="true">📖 Le Cours</button>
+      <button class="lesson-tab active" data-tab="description"
+        role="tab" aria-selected="true">🗒️ Description</button>
+      <button class="lesson-tab" data-tab="cours"
+        role="tab" aria-selected="false">📖 Le Cours</button>
       <button class="lesson-tab" data-tab="evaluation"
         role="tab" aria-selected="false">✍️ L'Évaluation</button>
     </div>
 
-    <!-- ── Onglet Cours ── -->
-    <div class="tab-panel" id="tab-cours" role="tabpanel">
+    <!-- ── Onglet Description ── -->
+    <div class="tab-panel" id="tab-description" role="tabpanel">
   `;
+
+  if (session.description) {
+    html += `<div class="session-description">${session.description}</div>`;
+  } else {
+    html += `<div class="session-description"><p>La description de cette séance sera disponible prochainement.</p></div>`;
+  }
+
+  html += `</div><!-- /tab-description -->
+
+    <!-- ── Onglet Cours ── -->
+    <div class="tab-panel hidden" id="tab-cours" role="tabpanel">
+  `;
+
+  /* Description courte de la vidéo */
+  if (session.videoDesc) {
+    html += `<p class="video-caption">${session.videoDesc}</p>`;
+  }
 
   /* Vidéo YouTube */
   if (session.video) {
@@ -729,9 +748,6 @@ function buildLessonHTML(module, session) {
         </a>`;
     });
   }
-
-  /* Texte d'introduction */
-  if (session.intro) html += `<div class="lesson-intro">${session.intro}</div>`;
 
   /* Autres ressources téléchargeables (non recap) */
   const otherRes = session.resources?.filter(r => !r.recap) || [];

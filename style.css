@@ -380,7 +380,71 @@ img, iframe { max-width: 100%; display: block; }
   border: none;
 }
 
-/* Texte introduction */
+/* ── Description de séance ── */
+.session-description {
+  font-size: 0.97rem;
+  line-height: 1.85;
+  color: var(--text-primary);
+}
+.session-description p { margin-bottom: 18px; }
+.session-description p:last-child { margin-bottom: 0; }
+
+.session-objectives {
+  margin-top: 28px;
+  padding: 22px 28px;
+  background: linear-gradient(135deg, rgba(77,184,200,0.06) 0%, rgba(255,138,91,0.05) 100%);
+  border: 1px solid rgba(77,184,200,0.25);
+  border-radius: var(--radius-md);
+}
+.objectives-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--cyan);
+  margin-bottom: 14px;
+}
+.session-objectives ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.session-objectives ul li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.session-objectives ul li::before {
+  content: "✓";
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  background: var(--gradient);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+/* Courte description vidéo (onglet cours) */
+.video-caption {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+  line-height: 1.6;
+}
+
+/* Texte introduction (legacy) */
 .lesson-intro {
   font-size: 0.97rem;
   line-height: 1.8;
