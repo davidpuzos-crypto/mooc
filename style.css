@@ -2397,3 +2397,77 @@ img, iframe { max-width: 100%; display: block; }
   .lp-module-num { font-size: 1.6rem; }
   .lp-final-cta { padding: 64px 20px; }
 }
+
+/* ============================================================
+   ONBOARDING STEPS — Vue intermédiaire modale d'inscription
+   ============================================================ */
+
+.onboarding-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 24px 0 28px;
+}
+
+.onboarding-step {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 14px 0;
+  position: relative;
+}
+
+/* Ligne de connexion entre les étapes */
+.onboarding-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 50px;
+  width: 2px;
+  height: calc(100% - 36px);
+  background: linear-gradient(to bottom, rgba(77,184,200,0.3), rgba(77,184,200,0.05));
+}
+
+.step-num {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cyan), #38a3b4);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(77,184,200,0.28);
+  position: relative;
+  z-index: 1;
+}
+
+.step-content { padding-top: 6px; }
+
+.step-title {
+  font-size: 0.93rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 3px;
+}
+
+.step-text {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* Auth view transition */
+#auth-onboarding-view,
+#auth-main-view,
+#auth-reset-view {
+  animation: authViewIn 0.25s ease;
+}
+@keyframes authViewIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
