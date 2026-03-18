@@ -50,34 +50,36 @@ const courseData = {
       title: "Découvrir, s'initier et être créatif avec l'IA",
       sessions: [
 
-        /* ------ Séance 1 — évaluation QCM (données de test complètes) ------ */
+        /* ------ Séance 1 — Démystifier l'IA (4 QCM) ------ */
         {
           id: "m1s1",
-          title: "Séance 1 — Introduction à l'Intelligence Artificielle",
-          video: "https://www.youtube.com/embed/aircAruvnKk",
+          title: "Séance 1 — Démystifier l'Intelligence Artificielle",
+          video: null,
           intro: `
-            <p>Bienvenue dans cette première séance ! Nous allons explorer ensemble les fondements
-            de l'Intelligence Artificielle : ce qu'elle est, d'où elle vient, et comment elle
-            transforme notre quotidien.</p>
-            <p>Au programme : définitions clés, grandes dates historiques, et un premier tour
-            d'horizon des outils IA que vous utiliserez tout au long de cette formation.</p>
+            <p>ChatGPT impressionne, mais savez-vous vraiment ce qui se passe sous le capot ?
+            Dans cette séance, nous allons lever le voile sur le fonctionnement réel des outils
+            d'IA générative et démonter quelques idées reçues très répandues.</p>
+            <p>Un concept clé à retenir : le <strong>« perroquet stochastique »</strong>. Cette
+            métaphore, proposée par des chercheuses en linguistique, décrit les grands modèles de
+            langage comme des systèmes qui assemblent des mots de façon statistiquement cohérente —
+            sans pour autant <em>comprendre</em> quoi que ce soit. ChatGPT ne raisonne pas : il
+            prédit le mot suivant le plus probable, encore et encore.</p>
+            <p>Comprendre cela change tout : vous saurez pourquoi l'IA peut se tromper avec
+            assurance (ce qu'on appelle les <strong>« hallucinations »</strong>), et pourquoi
+            certains termes comme « intelligence » ou « comprend » sont trompeurs.</p>
             <p><strong>Objectifs de la séance :</strong></p>
             <ul style="margin: 12px 0 0 20px; line-height: 2;">
-              <li>Comprendre ce qu'est l'IA et ses grands paradigmes</li>
-              <li>Distinguer IA générative, Machine Learning et Deep Learning</li>
-              <li>Identifier les principaux outils IA disponibles en 2024</li>
+              <li>Comprendre le mécanisme de prédiction de mots des LLM</li>
+              <li>Définir le concept de « perroquet stochastique »</li>
+              <li>Identifier et expliquer le phénomène d'hallucination</li>
+              <li>Adopter un vocabulaire précis et non anthropomorphique</li>
             </ul>
           `,
           resources: [
             {
-              label: "Présentation PDF — Introduction à l'IA",
+              label: "Support de présentation — Démystifier l'IA",
               url: "#",
               icon: "📄"
-            },
-            {
-              label: "Fiche récap — Les outils IA essentiels",
-              url: "#",
-              icon: "📋"
             }
           ],
           evaluation: {
@@ -85,46 +87,102 @@ const courseData = {
             questions: [
               {
                 id: "m1s1q1",
-                question: "Parmi les propositions suivantes, laquelle définit le mieux l'Intelligence Artificielle Générative ?",
+                question: "Comment ChatGPT génère-t-il une réponse, fondamentalement ?",
                 options: [
-                  { id: "a", text: "Un système qui détecte des anomalies dans des données." },
-                  { id: "b", text: "Un système capable de créer du contenu original (texte, images, sons) à partir d'exemples." },
-                  { id: "c", text: "Un programme qui exécute des tâches répétitives de façon automatisée." },
-                  { id: "d", text: "Un algorithme qui trie et classe des données existantes." }
+                  { id: "a", text: "Il recherche la réponse dans une base de données encyclopédique." },
+                  { id: "b", text: "Il prédit, mot après mot, le token le plus probable en fonction du contexte." },
+                  { id: "c", text: "Il formule un raisonnement logique pas à pas, comme un humain." },
+                  { id: "d", text: "Il consulte internet en temps réel pour construire sa réponse." }
                 ],
                 answer: "b"
               },
               {
                 id: "m1s1q2",
-                question: "Quel modèle de langage de grande taille (LLM) a été rendu public par OpenAI et a popularisé les chatbots conversationnels à partir de 2022 ?",
+                question: "Que désigne l'expression « perroquet stochastique » appliquée aux grands modèles de langage (LLM) ?",
                 options: [
-                  { id: "a", text: "DALL·E" },
-                  { id: "b", text: "Midjourney" },
-                  { id: "c", text: "ChatGPT (basé sur GPT)" },
-                  { id: "d", text: "Stable Diffusion" }
+                  { id: "a", text: "Un modèle qui copie mot pour mot des textes existants sans les modifier." },
+                  { id: "b", text: "Un système qui génère du texte de façon aléatoire, sans aucune cohérence." },
+                  { id: "c", text: "Un modèle qui assemble des séquences de mots statistiquement plausibles sans réellement comprendre le sens." },
+                  { id: "d", text: "Un algorithme qui imite la voix humaine pour la synthèse vocale." }
                 ],
                 answer: "c"
+              },
+              {
+                id: "m1s1q3",
+                question: "Dans le contexte de l'IA générative, qu'appelle-t-on une « hallucination » ?",
+                options: [
+                  { id: "a", text: "Une réponse délibérément mensongère générée par le modèle pour tromper l'utilisateur." },
+                  { id: "b", text: "Une erreur visuelle produite par les outils de génération d'images." },
+                  { id: "c", text: "Une affirmation fausse ou inventée présentée avec assurance par le modèle." },
+                  { id: "d", text: "Un biais dans les données d'entraînement qui fausse les statistiques." }
+                ],
+                answer: "c"
+              },
+              {
+                id: "m1s1q4",
+                question: "Pourquoi les chercheurs déconseillent-ils d'utiliser des termes comme « comprend », « pense » ou « sait » pour décrire un LLM ?",
+                options: [
+                  { id: "a", text: "Ces termes sont protégés juridiquement et ne peuvent pas être utilisés librement." },
+                  { id: "b", text: "Ils anthropomorphisent le modèle et créent une confusion sur ses capacités réelles, qui sont purement statistiques." },
+                  { id: "c", text: "Ils sont techniquement inexacts car les LLM fonctionnent uniquement sur des images, pas du texte." },
+                  { id: "d", text: "L'usage de ce vocabulaire est interdit par les conditions d'utilisation d'OpenAI." }
+                ],
+                answer: "b"
               }
             ]
           }
         },
 
-        /* ------ Séance 2 — évaluation par e-mail (démonstration) ------ */
+        /* ------ Séance 2 — Histoire de l'IA (1 QCM) ------ */
         {
           id: "m1s2",
-          title: "Séance 2 — Les grands outils IA du moment",
+          title: "Séance 2 — Histoire de l'IA : d'où ça vient ?",
           video: null,
-          intro: null,
-          resources: [],
+          intro: `
+            <p>L'Intelligence Artificielle n'est pas une invention du XXIe siècle. Ses racines
+            plongent dans les années 1950, avec des pionniers qui rêvaient déjà de machines
+            capables de « penser ».</p>
+            <p>En parcourant <strong>75 ans d'histoire</strong>, vous découvrirez les grandes
+            ruptures technologiques, les périodes de désillusion (les fameux « hivers de l'IA »),
+            et les avancées fulminantes qui ont abouti aux outils que vous utilisez aujourd'hui.
+            Comprendre cette trajectoire vous donnera une vision plus lucide des promesses et des
+            limites actuelles de l'IA.</p>
+            <p><strong>Objectifs de la séance :</strong></p>
+            <ul style="margin: 12px 0 0 20px; line-height: 2;">
+              <li>Situer les grandes étapes historiques de l'IA</li>
+              <li>Identifier les figures fondatrices et leurs contributions</li>
+              <li>Comprendre les cycles d'euphorie et de désenchantement</li>
+            </ul>
+          `,
+          resources: [
+            {
+              label: "Frise chronologique — 75 ans d'histoire de l'IA",
+              url: "#",
+              icon: "📅"
+            }
+          ],
           evaluation: {
-            type: "email"
+            type: "qcm",
+            questions: [
+              {
+                id: "m1s2q1",
+                question: "À qui attribue-t-on la création du terme « Intelligence Artificielle », et lors de quelle conférence fondatrice ?",
+                options: [
+                  { id: "a", text: "Alan Turing, lors de la conférence de Cambridge en 1950." },
+                  { id: "b", text: "John McCarthy, lors de la conférence de Dartmouth en 1956." },
+                  { id: "c", text: "Marvin Minsky, lors du symposium du MIT en 1959." },
+                  { id: "d", text: "Norbert Wiener, lors du congrès de cybernétique à New York en 1948." }
+                ],
+                answer: "b"
+              }
+            ]
           }
         },
 
         /* ------ Séance 3 ------ */
         {
           id: "m1s3",
-          title: "Séance 3 — Créer du contenu textuel avec l'IA",
+          title: "Séance 3 — Comprendre le fonctionnement de l'Intelligence Artificielle",
           video: null,
           intro: null,
           resources: [],
@@ -134,7 +192,17 @@ const courseData = {
         /* ------ Séance 4 ------ */
         {
           id: "m1s4",
-          title: "Séance 4 — Prompt Engineering : parler à l'IA efficacement",
+          title: "Séance 4 — Panorama des grands outils IA",
+          video: null,
+          intro: null,
+          resources: [],
+          evaluation: null
+        },
+
+        /* ------ Séance 5 ------ */
+        {
+          id: "m1s5",
+          title: "Séance 5 — Prompt Engineering : parler à l'IA efficacement",
           video: null,
           intro: null,
           resources: [],
