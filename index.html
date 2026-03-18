@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tisselia — Plateforme de formation IA & Cybersécurité</title>
+  <title>Tisselia — Formation IA & Cybersécurité</title>
 
   <!-- Google Fonts : Poppins -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <!-- Font Awesome (icônes œil sur les champs de mot de passe) -->
+  <!-- Font Awesome (icônes) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
   <link rel="stylesheet" href="style.css" />
@@ -18,7 +18,7 @@
   <!-- Canvas Confetti (gamification) -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-  <!-- Firebase SDKs — mode compat (globaux : firebase.auth(), firebase.firestore()) -->
+  <!-- Firebase SDKs — mode compat -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -26,10 +26,13 @@
 <body>
 
   <!-- ======================================================
-       AUTH OVERLAY — masque tout le contenu tant que non connecté
+       AUTH OVERLAY — modal sur la landing page ou la plateforme
   ====================================================== -->
-  <div id="auth-overlay" class="auth-overlay">
+  <div id="auth-overlay" class="auth-overlay hidden">
     <div class="auth-card">
+
+      <!-- Bouton fermer (retour à la landing page) -->
+      <button class="auth-close-btn" id="auth-close-btn" aria-label="Fermer">✕</button>
 
       <!-- Logo -->
       <div class="auth-logo">
@@ -43,10 +46,8 @@
         <h2 class="auth-title" id="auth-title">Se connecter</h2>
         <p class="auth-subtitle" id="auth-subtitle">Accédez à votre espace de formation</p>
 
-        <!-- Bandeau d'erreur -->
         <div id="auth-error" class="auth-error hidden"></div>
 
-        <!-- Formulaire e-mail + mot de passe -->
         <form id="auth-form" class="auth-form" novalidate>
           <div class="auth-field">
             <label for="auth-email">Adresse email</label>
@@ -54,7 +55,6 @@
               autocomplete="email" required />
           </div>
 
-          <!-- Mot de passe + icône œil -->
           <div class="auth-field">
             <label for="auth-password">Mot de passe</label>
             <div class="input-password-wrapper">
@@ -67,7 +67,6 @@
             </div>
           </div>
 
-          <!-- Confirmation mot de passe (inscription uniquement, masquée par défaut) -->
           <div class="auth-field hidden" id="confirm-password-field">
             <label for="signup-password-confirm">Confirmez votre mot de passe</label>
             <div class="input-password-wrapper">
@@ -85,17 +84,14 @@
           </button>
         </form>
 
-        <!-- Lien "Mot de passe oublié ?" (connexion uniquement) -->
         <div id="forgot-password-wrapper" class="forgot-password-wrapper">
           <button type="button" id="forgot-password-btn" class="forgot-password-btn">
             Mot de passe oublié ?
           </button>
         </div>
 
-        <!-- Diviseur ── ou ── -->
         <div class="auth-divider"><span>ou</span></div>
 
-        <!-- Connexion via Google -->
         <button id="google-signin-btn" class="google-signin-btn" type="button">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
             <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -106,7 +102,6 @@
           Continuer avec Google
         </button>
 
-        <!-- Bascule Connexion ↔ Inscription -->
         <p class="auth-toggle-text">
           <span id="auth-toggle-label">Pas encore de compte ?</span>
           <button id="auth-toggle-btn" class="auth-toggle-btn">S'inscrire</button>
@@ -141,18 +136,263 @@
     </div>
   </div>
 
+  <!-- ======================================================
+       LANDING PAGE — écran par défaut (non connecté)
+  ====================================================== -->
+  <div id="landing-page" class="landing-page">
+
+    <!-- Header sticky -->
+    <header class="lp-header" id="lp-header">
+      <div class="lp-header-inner">
+        <a href="#" class="lp-logo-link" id="lp-logo-link">
+          <img src="https://tisselia.com/wp-content/uploads/2025/07/cropped-path3-2.png"
+            alt="Tisselia" class="lp-logo-img" />
+        </a>
+        <nav class="lp-nav" id="lp-nav">
+          <a href="#pour-qui" class="lp-nav-link">Pour qui ?</a>
+          <a href="#programme" class="lp-nav-link">Programme</a>
+          <a href="#piliers" class="lp-nav-link">Approche</a>
+          <button id="landing-signin-btn" class="lp-btn-secondary">Se connecter</button>
+          <button id="landing-signup-btn" class="lp-btn-primary">S'inscrire →</button>
+        </nav>
+        <button id="lp-hamburger" class="lp-hamburger" aria-label="Ouvrir le menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="lp-hero">
+      <div class="lp-hero-inner">
+        <div class="lp-hero-content reveal">
+          <span class="lp-badge">Formation 100% en ligne</span>
+          <h1 class="lp-hero-title">
+            Maîtrisez <span class="lp-gradient-text">l'Intelligence Artificielle</span>
+            &amp; la Cybersécurité
+          </h1>
+          <p class="lp-hero-subtitle">
+            Boostez votre productivité, automatisez vos tâches et créez des contenus
+            professionnels en toute sécurité. Une formation pensée pour les entrepreneurs
+            et les professionnels qui veulent prendre de l'avance.
+          </p>
+          <div class="lp-hero-cta">
+            <button id="hero-signup-btn" class="lp-btn-primary lp-btn-lg">
+              S'inscrire à la formation →
+            </button>
+            <a href="#programme" class="lp-btn-ghost lp-btn-lg">Voir le programme ↓</a>
+          </div>
+        </div>
+
+        <div class="lp-hero-visual reveal reveal-delay-2">
+          <div class="lp-video-placeholder">
+            <div class="lp-video-inner">
+              <div class="lp-play-btn" aria-label="Vidéo de présentation">
+                <div class="lp-play-icon">▶</div>
+              </div>
+              <p class="lp-video-label">Présentation de la formation</p>
+              <p class="lp-video-sub">Découvrez le programme en 2 minutes</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lp-blob lp-blob-1" aria-hidden="true"></div>
+      <div class="lp-blob lp-blob-2" aria-hidden="true"></div>
+    </section>
+
+    <!-- Barre de statistiques -->
+    <div class="lp-stats-bar">
+      <div class="lp-stats-inner">
+        <div class="lp-stat-item">
+          <span class="lp-stat-value">12</span>
+          <span class="lp-stat-label">séances de formation</span>
+        </div>
+        <div class="lp-stat-sep" aria-hidden="true"></div>
+        <div class="lp-stat-item">
+          <span class="lp-stat-value">4</span>
+          <span class="lp-stat-label">modules thématiques</span>
+        </div>
+        <div class="lp-stat-sep" aria-hidden="true"></div>
+        <div class="lp-stat-item">
+          <span class="lp-stat-value">100%</span>
+          <span class="lp-stat-label">en ligne &amp; à votre rythme</span>
+        </div>
+        <div class="lp-stat-sep" aria-hidden="true"></div>
+        <div class="lp-stat-item">
+          <span class="lp-stat-value">✦</span>
+          <span class="lp-stat-label">attestation de formation</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section : Pour Qui ? -->
+    <section id="pour-qui" class="lp-section">
+      <div class="lp-section-inner">
+        <div class="lp-section-header reveal">
+          <span class="lp-section-badge">Pour qui ?</span>
+          <h2 class="lp-section-title">Une formation taillée pour votre réalité</h2>
+          <p class="lp-section-subtitle">Que vous soyez entrepreneur, indépendant ou en transition, cette formation s'adapte à votre quotidien et vos objectifs.</p>
+        </div>
+        <div class="lp-cards-grid lp-cards-4">
+          <div class="lp-card reveal reveal-delay-1">
+            <div class="lp-card-icon">🚀</div>
+            <h3 class="lp-card-title">Auto-entrepreneurs</h3>
+            <p class="lp-card-text">Automatisez vos tâches répétitives, créez vos visuels et textes marketing en quelques minutes grâce à l'IA.</p>
+          </div>
+          <div class="lp-card reveal reveal-delay-2">
+            <div class="lp-card-icon">💼</div>
+            <h3 class="lp-card-title">Indépendants</h3>
+            <p class="lp-card-text">Optimisez votre productivité, rédigez vos propositions commerciales et gérez votre communication avec l'IA.</p>
+          </div>
+          <div class="lp-card reveal reveal-delay-3">
+            <div class="lp-card-icon">💡</div>
+            <h3 class="lp-card-title">Porteurs de projets</h3>
+            <p class="lp-card-text">Donnez vie à vos idées : prototypez, pitchez et construisez votre offre avec les meilleurs outils IA du moment.</p>
+          </div>
+          <div class="lp-card reveal reveal-delay-4">
+            <div class="lp-card-icon">🔄</div>
+            <h3 class="lp-card-title">En reconversion</h3>
+            <p class="lp-card-text">Acquérez des compétences digitales concrètes et directement valorisables pour réussir votre transition.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section : Le Programme -->
+    <section id="programme" class="lp-section lp-section-alt">
+      <div class="lp-section-inner">
+        <div class="lp-section-header reveal">
+          <span class="lp-section-badge">Le Programme</span>
+          <h2 class="lp-section-title">4 modules pour maîtriser l'IA de A à Z</h2>
+          <p class="lp-section-subtitle">Un parcours progressif de 12 séances, du débutant au projet concret.</p>
+        </div>
+        <div class="lp-modules-grid">
+          <div class="lp-module-card reveal reveal-delay-1">
+            <div class="lp-module-num">01</div>
+            <div class="lp-module-body">
+              <h3 class="lp-module-title">S'initier et être créatif avec l'IA</h3>
+              <p class="lp-module-desc">Découvrez ChatGPT, Gemini et les grands modèles de langage. Apprenez à rédiger des prompts efficaces et à générer du contenu de qualité professionnelle.</p>
+              <div class="lp-module-tags">
+                <span class="lp-tag">ChatGPT</span>
+                <span class="lp-tag">Gemini</span>
+                <span class="lp-tag">Prompting</span>
+                <span class="lp-tag">Séances 1–4</span>
+              </div>
+            </div>
+          </div>
+          <div class="lp-module-card reveal reveal-delay-2">
+            <div class="lp-module-num">02</div>
+            <div class="lp-module-body">
+              <h3 class="lp-module-title">Générer et éditer des contenus visuels et vidéos</h3>
+              <p class="lp-module-desc">Créez des images, illustrations et vidéos professionnelles avec Midjourney, DALL-E, Canva IA et les outils de génération vidéo de dernière génération.</p>
+              <div class="lp-module-tags">
+                <span class="lp-tag">Midjourney</span>
+                <span class="lp-tag">DALL-E</span>
+                <span class="lp-tag">Canva IA</span>
+                <span class="lp-tag">Séances 5–8</span>
+              </div>
+            </div>
+          </div>
+          <div class="lp-module-card reveal reveal-delay-3">
+            <div class="lp-module-num">03</div>
+            <div class="lp-module-body">
+              <h3 class="lp-module-title">Rédiger, traduire et automatiser ses tâches</h3>
+              <p class="lp-module-desc">Maîtrisez les outils de rédaction et traduction automatique, et créez des automatisations no-code pour libérer du temps précieux dans votre quotidien.</p>
+              <div class="lp-module-tags">
+                <span class="lp-tag">DeepL</span>
+                <span class="lp-tag">Make</span>
+                <span class="lp-tag">Zapier</span>
+                <span class="lp-tag">Séances 9–10</span>
+              </div>
+            </div>
+          </div>
+          <div class="lp-module-card reveal reveal-delay-4">
+            <div class="lp-module-num">04</div>
+            <div class="lp-module-body">
+              <h3 class="lp-module-title">Concrétiser son projet entrepreneurial</h3>
+              <p class="lp-module-desc">Construisez et présentez votre projet IA de A à Z : business plan, pitch deck, site web — tout avec l'IA comme copilote stratégique.</p>
+              <div class="lp-module-tags">
+                <span class="lp-tag">Business Plan</span>
+                <span class="lp-tag">Pitch</span>
+                <span class="lp-tag">Site web IA</span>
+                <span class="lp-tag">Séances 11–12</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section : Les 3 Piliers -->
+    <section id="piliers" class="lp-section">
+      <div class="lp-section-inner">
+        <div class="lp-section-header reveal">
+          <span class="lp-section-badge">Notre approche</span>
+          <h2 class="lp-section-title">3 fils rouges tout au long de la formation</h2>
+          <p class="lp-section-subtitle">Au-delà des outils, nous vous formons à un usage responsable, légal et sécurisé de l'IA.</p>
+        </div>
+        <div class="lp-cards-grid lp-cards-3">
+          <div class="lp-pillar-card reveal reveal-delay-1">
+            <div class="lp-pillar-icon-wrap">
+              <span class="lp-pillar-icon">🧠</span>
+            </div>
+            <h3 class="lp-pillar-title">Éthique &amp; Esprit critique</h3>
+            <p class="lp-pillar-text">Comprendre les biais, les limites et les enjeux sociétaux de l'IA. Apprenez à évaluer les outputs et à garder votre esprit critique face aux résultats générés.</p>
+          </div>
+          <div class="lp-pillar-card reveal reveal-delay-2">
+            <div class="lp-pillar-icon-wrap">
+              <span class="lp-pillar-icon">⚖️</span>
+            </div>
+            <h3 class="lp-pillar-title">Droit &amp; Propriété intellectuelle</h3>
+            <p class="lp-pillar-text">Maîtrisez le cadre légal : droits d'auteur sur les créations IA, RGPD, responsabilité, et bonnes pratiques pour protéger votre travail et celui de vos clients.</p>
+          </div>
+          <div class="lp-pillar-card reveal reveal-delay-3">
+            <div class="lp-pillar-icon-wrap">
+              <span class="lp-pillar-icon">🔒</span>
+            </div>
+            <h3 class="lp-pillar-title">Cybersécurité</h3>
+            <p class="lp-pillar-text">Identifiez les risques spécifiques à l'IA (phishing augmenté, deepfakes, fuite de données) et adoptez les bonnes pratiques pour sécuriser votre activité.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section CTA Final -->
+    <section class="lp-final-cta">
+      <div class="lp-final-cta-inner reveal">
+        <div class="lp-cta-blob" aria-hidden="true"></div>
+        <span class="lp-section-badge" style="color:#fff;border-color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);">Rejoindre la formation</span>
+        <h2 class="lp-final-cta-title">Prêt à prendre de l'avance ?</h2>
+        <p class="lp-final-cta-subtitle">Inscrivez-vous dès maintenant et transformez l'IA en véritable levier pour votre activité.</p>
+        <button id="footer-signup-btn" class="lp-btn-white lp-btn-lg">
+          S'inscrire à la formation →
+        </button>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="lp-footer">
+      <div class="lp-footer-inner">
+        <img src="https://tisselia.com/wp-content/uploads/2025/07/cropped-path3-2.png"
+          alt="Tisselia" class="lp-footer-logo" />
+        <p class="lp-footer-text">© 2025 Tisselia — Formation Intelligence Artificielle &amp; Cybersécurité</p>
+        <a href="mailto:davidpuzos@tisselia.com" class="lp-footer-link">Contact</a>
+      </div>
+    </footer>
+
+  </div><!-- /landing-page -->
+
   <!-- ===== OVERLAY MOBILE (fond sombre quand sidebar ouverte) ===== -->
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-  <!-- ===== WRAPPER GLOBAL ===== -->
-  <div id="app-wrapper" class="app-wrapper">
+  <!-- ===== APP WRAPPER (plateforme LMS — affichée uniquement si connecté+approuvé) ===== -->
+  <div id="app-wrapper" class="app-wrapper hidden">
 
     <!-- ======================================================
          SIDEBAR GAUCHE
     ====================================================== -->
     <aside id="sidebar" class="sidebar">
 
-      <!-- Logo Tisselia -->
       <div class="sidebar-header">
         <div class="logo">
           <img src="https://tisselia.com/wp-content/uploads/2025/07/cropped-path3-2.png"
@@ -161,7 +401,6 @@
         <button id="sidebar-close-btn" class="sidebar-close-btn" aria-label="Fermer le menu">✕</button>
       </div>
 
-      <!-- Jauge de progression (masquée si pending) -->
       <div class="progress-container hidden" id="progress-container">
         <div class="progress-label">
           <span>Progression globale</span>
@@ -172,7 +411,6 @@
         </div>
       </div>
 
-      <!-- Bouton Accueil (masqué si pending) -->
       <div class="sidebar-home-wrapper hidden" id="sidebar-home-wrapper">
         <button id="home-btn" class="sidebar-home-btn">
           <span class="home-btn-icon">🏠</span>
@@ -180,16 +418,13 @@
         </button>
       </div>
 
-      <!-- Navigation modules/séances (masquée si pending) -->
       <nav id="course-nav" class="course-nav hidden" aria-label="Plan de cours"></nav>
 
-      <!-- Pied de sidebar : utilisateur connecté + déconnexion -->
       <div class="sidebar-footer hidden" id="sidebar-footer">
         <div class="user-info">
           <span class="user-avatar">👤</span>
           <span id="user-email-display" class="user-email-display"></span>
         </div>
-        <!-- Bouton Panel Admin — visible uniquement pour l'admin, juste au-dessus de Déconnexion -->
         <div class="sidebar-admin-wrapper hidden" id="sidebar-admin-wrapper">
           <button id="admin-panel-btn" class="sidebar-admin-btn">
             <span>⚙️</span>
@@ -206,7 +441,6 @@
     ====================================================== -->
     <main id="main-content" class="main-content">
 
-      <!-- Header top (mobile : bouton hamburger) -->
       <header class="main-header">
         <button id="hamburger-btn" class="hamburger-btn" aria-label="Ouvrir le menu">
           <span></span><span></span><span></span>
@@ -214,42 +448,35 @@
         <div class="main-header-title" id="main-header-title">Intelligence Artificielle &amp; Cybersécurité</div>
       </header>
 
-      <!-- ======================================================
-           TABLEAU DE BORD ADMINISTRATEUR
-           Affiché à la place de lesson-view quand l'admin clique sur "Panel Admin"
-      ====================================================== -->
+      <!-- Tableau de bord admin -->
       <div id="admin-panel" class="admin-panel hidden">
-
         <div class="admin-header">
           <div class="admin-header-text">
             <h1 class="admin-title">⚙️ Tableau de bord</h1>
             <p class="admin-subtitle">Gérez les accès et la progression de vos élèves en temps réel.</p>
           </div>
-          <!-- Cartes de statistiques globales -->
           <div id="admin-stats" class="admin-stats"></div>
         </div>
-
-        <!-- Tableau des utilisateurs (injecté par app.js) -->
         <div id="users-table-wrapper" class="users-table-wrapper">
           <p class="admin-loading">Chargement des élèves…</p>
         </div>
+      </div>
 
-      </div><!-- /admin-panel -->
-
-      <!-- Écran "inscription en attente" (status: pending) -->
+      <!-- Écran "inscription en attente" -->
       <div id="pending-screen" class="pending-screen hidden">
         <div class="pending-icon">⏳</div>
-        <h2 class="pending-title">Inscription en attente de validation</h2>
+        <h2 class="pending-title">Inscription prise en compte !</h2>
         <p class="pending-text">
-          Votre inscription est en attente de validation par l'équipe Tisselia.<br>
-          Vous serez notifié dès que votre accès sera activé.
+          Vous serez recontacté prochainement par nos services par email avec la procédure
+          de paiement et les modalités d'inscription.<br><br>
+          Votre accès à la plateforme sera activé dès la validation de votre dossier.
         </p>
       </div>
 
       <!-- Zone d'affichage du contenu (status: approved) -->
       <div id="lesson-view" class="lesson-view">
 
-        <!-- Page d'accueil -->
+        <!-- Page d'accueil de la plateforme -->
         <div id="welcome-screen" class="welcome-screen">
           <div class="home-hero">
             <span class="home-badge">Formation certifiante</span>
@@ -262,7 +489,6 @@
             <button class="btn-primary" id="start-btn">Reprendre ma formation →</button>
           </div>
 
-          <!-- Bannière de complétion — masquée par défaut, affichée si 100 % terminé -->
           <div id="certificate-banner" class="certificate-banner hidden">
             <div class="certificate-icon">🏆</div>
             <div class="certificate-text">
@@ -290,8 +516,8 @@
               <h3 class="home-card-title">Fonctionnement</h3>
               <ul class="home-card-list">
                 <li>Séances débloquées progressivement par votre formateur</li>
-                <li>Chaque séance contient une vidéo, un cours et un quiz</li>
-                <li>Validez le quiz puis cliquez "✅ Terminé" pour progresser</li>
+                <li>Chaque séance contient une vidéo, un cours et une évaluation</li>
+                <li>Validez l'évaluation puis cliquez "✅ Terminé" pour progresser</li>
                 <li>Votre avancée est sauvegardée automatiquement</li>
               </ul>
             </div>
@@ -308,16 +534,14 @@
           </div>
         </div><!-- /welcome-screen -->
 
-        <!-- Contenu injecté dynamiquement par app.js -->
         <div id="lesson-content" class="lesson-content hidden"></div>
 
       </div><!-- /lesson-view -->
 
-    </main><!-- /main-content -->
+    </main>
 
   </div><!-- /app-wrapper -->
 
-  <!-- Scripts : data.js doit être chargé avant app.js -->
   <script src="data.js"></script>
   <script src="app.js"></script>
 </body>
