@@ -157,6 +157,12 @@ const courseData = {
           `,
           resources: [
             {
+              label: "Support de présentation — L'histoire de l'Intelligence Artificielle",
+              url: "https://tisselia.com/wp-content/uploads/2026/03/Lhistoire-de-lIntelligence-Artificielle.pdf",
+              icon: "📄",
+              recap: true
+            },
+            {
               label: "Frise chronologique — 75 ans d'histoire de l'IA",
               url: "#",
               icon: "📅"
