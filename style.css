@@ -2471,3 +2471,33 @@ img, iframe { max-width: 100%; display: block; }
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ============================================================
+   COMING SOON BLOCK — Message "Bientôt disponible" après validation
+   ============================================================ */
+
+.coming-soon-block {
+  margin-top: 16px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg,
+    rgba(77,184,200,0.07) 0%,
+    rgba(245,155,139,0.06) 100%);
+  border: 1.5px solid rgba(77,184,200,0.22);
+  border-radius: var(--radius-lg);
+  color: #2d6b76;
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.55;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.coming-soon-block::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top left,
+    rgba(77,184,200,0.06), transparent 65%);
+  pointer-events: none;
+}
