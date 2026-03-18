@@ -106,6 +106,16 @@ let isSignupMode = false;
 function showAuthOverlay() { authOverlay.classList.remove('hidden'); }
 function hideAuthOverlay() { authOverlay.classList.add('hidden'); }
 
+/**
+ * Affiche une des 3 vues de l'overlay d'auth :
+ *   'onboarding' | 'main' | 'reset'
+ */
+function showAuthView(name) {
+  document.getElementById('auth-onboarding-view').classList.toggle('hidden', name !== 'onboarding');
+  document.getElementById('auth-main-view').classList.toggle('hidden', name !== 'main');
+  document.getElementById('auth-reset-view').classList.toggle('hidden', name !== 'reset');
+}
+
 /** Bascule entre mode "Se connecter" et "S'inscrire". */
 function setAuthMode(signup) {
   isSignupMode = signup;
@@ -1237,8 +1247,10 @@ document.getElementById('google-signin-btn').addEventListener('click', async () 
 
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
-    const result   = await auth.signInWithPopup(provider);
-    const user     = result.user;
+    /* Forcer le sélecteur de compte Google à chaque fois */
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const result = await auth.signInWithPopup(provider);
+    const user   = result.user;
 
     /* Créer le document Firestore si l'utilisateur est nouveau */
     const docRef  = db.collection('users').doc(user.uid);
@@ -1248,7 +1260,7 @@ document.getElementById('google-signin-btn').addEventListener('click', async () 
         email:              user.email,
         role:               'student',
         status:             'pending',
-        maxSessionUnlocked: 1,
+        maxSessionUnlocked: 0,
         completedSessions:  [],
         createdAt:          firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -1261,28 +1273,26 @@ document.getElementById('google-signin-btn').addEventListener('click', async () 
         err.code !== 'auth/cancelled-popup-request') {
       showAuthError(translateFirebaseError(err.code));
     }
+  } finally {
+    /* Toujours ré-activer le bouton (sinon il reste disabled après déconnexion) */
     btn.disabled = false;
   }
 });
 
 /* --- Mot de passe oublié : afficher la vue de réinitialisation --- */
 document.getElementById('forgot-password-btn').addEventListener('click', () => {
-  /* Pré-remplir l'email si déjà saisi */
   document.getElementById('reset-email').value = authEmailInput.value;
   document.getElementById('reset-error').classList.add('hidden');
   document.getElementById('reset-success').classList.add('hidden');
   const sendBtn = document.getElementById('reset-send-btn');
   sendBtn.disabled = false;
   sendBtn.textContent = 'Envoyer le lien de réinitialisation';
-
-  authMainView.classList.add('hidden');
-  authResetView.classList.remove('hidden');
+  showAuthView('reset');
 });
 
 /* --- Retour vers la vue principale --- */
 document.getElementById('reset-back-btn').addEventListener('click', () => {
-  authResetView.classList.add('hidden');
-  authMainView.classList.remove('hidden');
+  showAuthView('main');
 });
 
 /* ============================================================
@@ -1311,20 +1321,39 @@ document.addEventListener('keydown', (e) => {
 /* --- Fermer l'overlay (retour à la landing) --- */
 document.getElementById('auth-close-btn').addEventListener('click', () => {
   hideAuthOverlay();
-  setAuthMode(false); /* reset au mode connexion pour la prochaine ouverture */
-});
-
-/* Ouvrir en mode Connexion */
-document.getElementById('landing-signin-btn').addEventListener('click', () => {
+  /* Remettre la vue principale en mode connexion pour la prochaine ouverture */
   setAuthMode(false);
-  showAuthOverlay();
+  showAuthView('main');
 });
 
-/* Ouvrir en mode Inscription */
-function openSignup() { setAuthMode(true); showAuthOverlay(); }
+/* Ouvrir en mode Connexion (accès direct au formulaire) */
+function openSignin() {
+  setAuthMode(false);
+  showAuthView('main');
+  showAuthOverlay();
+}
+document.getElementById('landing-signin-btn').addEventListener('click', openSignin);
+
+/* Ouvrir en mode Inscription → passe d'abord par l'onboarding */
+function openSignup() {
+  showAuthView('onboarding');
+  showAuthOverlay();
+}
 document.getElementById('landing-signup-btn').addEventListener('click', openSignup);
 document.getElementById('hero-signup-btn').addEventListener('click', openSignup);
 document.getElementById('footer-signup-btn').addEventListener('click', openSignup);
+
+/* --- Onboarding : "J'ai compris, je crée mon compte" → formulaire inscription --- */
+document.getElementById('onboarding-continue-btn').addEventListener('click', () => {
+  setAuthMode(true);
+  showAuthView('main');
+});
+
+/* --- Onboarding : "Déjà un compte ? Se connecter" --- */
+document.getElementById('onboarding-signin-btn').addEventListener('click', () => {
+  setAuthMode(false);
+  showAuthView('main');
+});
 
 /* --- Menu mobile landing page --- */
 const lpHamburger = document.getElementById('lp-hamburger');

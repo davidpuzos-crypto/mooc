@@ -40,7 +40,48 @@
         <span class="auth-logo-text">Tisselia</span>
       </div>
 
-      <!-- ══ VUE PRINCIPALE : Connexion / Inscription ══ -->
+      <!-- ══ VUE ONBOARDING : Comment ça marche ? (Step 1) ══ -->
+      <div id="auth-onboarding-view" class="hidden">
+
+        <h2 class="auth-title">Comment ça marche ?</h2>
+        <p class="auth-subtitle">Voici les 3 étapes pour démarrer votre formation.</p>
+
+        <div class="onboarding-steps">
+          <div class="onboarding-step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <p class="step-title">Créez votre compte gratuitement</p>
+              <p class="step-text">Remplissez le formulaire d'inscription — aucun paiement requis à cette étape.</p>
+            </div>
+          </div>
+          <div class="onboarding-step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <p class="step-title">Nous vous recontactons</p>
+              <p class="step-text">Vous recevrez un email avec les modalités d'inscription et la procédure de paiement.</p>
+            </div>
+          </div>
+          <div class="onboarding-step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <p class="step-title">Votre accès est activé</p>
+              <p class="step-text">Dès validation de votre dossier, vous démarrez la formation immédiatement.</p>
+            </div>
+          </div>
+        </div>
+
+        <button id="onboarding-continue-btn" class="btn-primary auth-submit-btn">
+          J'ai compris, je crée mon compte →
+        </button>
+
+        <p class="auth-toggle-text">
+          <span>Déjà un compte ?</span>
+          <button id="onboarding-signin-btn" class="auth-toggle-btn">Se connecter</button>
+        </p>
+
+      </div><!-- /auth-onboarding-view -->
+
+      <!-- ══ VUE PRINCIPALE : Connexion / Inscription (Step 2) ══ -->
       <div id="auth-main-view">
 
         <h2 class="auth-title" id="auth-title">Se connecter</h2>
@@ -152,8 +193,8 @@
           <a href="#pour-qui" class="lp-nav-link">Pour qui ?</a>
           <a href="#programme" class="lp-nav-link">Programme</a>
           <a href="#piliers" class="lp-nav-link">Approche</a>
-          <button id="landing-signin-btn" class="lp-btn-secondary">Se connecter</button>
-          <button id="landing-signup-btn" class="lp-btn-primary">S'inscrire →</button>
+          <button id="landing-signin-btn" class="lp-btn-secondary">Accès à la plateforme</button>
+          <button id="landing-signup-btn" class="lp-btn-primary">Commencer la formation →</button>
         </nav>
         <button id="lp-hamburger" class="lp-hamburger" aria-label="Ouvrir le menu" aria-expanded="false">
           <span></span><span></span><span></span>
@@ -177,7 +218,7 @@
           </p>
           <div class="lp-hero-cta">
             <button id="hero-signup-btn" class="lp-btn-primary lp-btn-lg">
-              S'inscrire à la formation →
+              Commencer la formation →
             </button>
             <a href="#programme" class="lp-btn-ghost lp-btn-lg">Voir le programme ↓</a>
           </div>
@@ -365,7 +406,7 @@
         <h2 class="lp-final-cta-title">Prêt à prendre de l'avance ?</h2>
         <p class="lp-final-cta-subtitle">Inscrivez-vous dès maintenant et transformez l'IA en véritable levier pour votre activité.</p>
         <button id="footer-signup-btn" class="lp-btn-white lp-btn-lg">
-          S'inscrire à la formation →
+          Commencer la formation →
         </button>
       </div>
     </section>
