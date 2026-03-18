@@ -54,7 +54,7 @@ const courseData = {
         {
           id: "m1s1",
           title: "Séance 1 — Démystifier l'Intelligence Artificielle",
-          video: null,
+          video: "https://www.youtube.com/embed/9W8H2tGLJng",
           intro: `
             <p>ChatGPT impressionne, mais savez-vous vraiment ce qui se passe sous le capot ?
             Dans cette séance, nous allons lever le voile sur le fonctionnement réel des outils
@@ -137,7 +137,7 @@ const courseData = {
         {
           id: "m1s2",
           title: "Séance 2 — Histoire de l'IA : d'où ça vient ?",
-          video: null,
+          video: "https://www.youtube.com/embed/9W8H2tGLJng",
           intro: `
             <p>L'Intelligence Artificielle n'est pas une invention du XXIe siècle. Ses racines
             plongent dans les années 1950, avec des pionniers qui rêvaient déjà de machines
