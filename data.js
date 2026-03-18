@@ -55,7 +55,10 @@ const courseData = {
           id: "m1s1",
           title: "Séance 1 — Démystifier l'Intelligence Artificielle",
           video: "https://www.youtube.com/embed/aSlyjXijNoA",
-          intro: `
+          videoDesc: `Cette vidéo lève le voile sur le fonctionnement réel de ChatGPT et des grands
+            modèles de langage — en introduisant le concept de « perroquet stochastique »
+            et le phénomène d'hallucination.`,
+          description: `
             <p>ChatGPT impressionne, mais savez-vous vraiment ce qui se passe sous le capot ?
             Dans cette séance, nous allons lever le voile sur le fonctionnement réel des outils
             d'IA générative et démonter quelques idées reçues très répandues.</p>
@@ -67,13 +70,15 @@ const courseData = {
             <p>Comprendre cela change tout : vous saurez pourquoi l'IA peut se tromper avec
             assurance (ce qu'on appelle les <strong>« hallucinations »</strong>), et pourquoi
             certains termes comme « intelligence » ou « comprend » sont trompeurs.</p>
-            <p><strong>Objectifs de la séance :</strong></p>
-            <ul style="margin: 12px 0 0 20px; line-height: 2;">
-              <li>Comprendre le mécanisme de prédiction de mots des LLM</li>
-              <li>Définir le concept de « perroquet stochastique »</li>
-              <li>Identifier et expliquer le phénomène d'hallucination</li>
-              <li>Adopter un vocabulaire précis et non anthropomorphique</li>
-            </ul>
+            <div class="session-objectives">
+              <p class="objectives-title">Objectifs de la séance</p>
+              <ul>
+                <li>Comprendre le mécanisme de prédiction de mots des LLM</li>
+                <li>Définir le concept de « perroquet stochastique »</li>
+                <li>Identifier et expliquer le phénomène d'hallucination</li>
+                <li>Adopter un vocabulaire précis et non anthropomorphique</li>
+              </ul>
+            </div>
           `,
           resources: [
             {
@@ -139,21 +144,25 @@ const courseData = {
           id: "m1s2",
           title: "Séance 2 — Histoire de l'IA : d'où ça vient ?",
           video: "https://www.youtube.com/embed/9W8H2tGLJng",
-          intro: `
-            <p>L'Intelligence Artificielle n'est pas une invention du XXIe siècle. Ses racines
-            plongent dans les années 1950, avec des pionniers qui rêvaient déjà de machines
+          videoDesc: `Un voyage de 75 ans à travers l'histoire de l'IA : des pionniers des années 1950
+            aux révolutions du deep learning, en passant par les deux « hivers de l'IA ».`,
+          description: `
+            <p>L'Intelligence Artificielle n'est pas une invention du XXI<sup>e</sup> siècle. Ses
+            racines plongent dans les années 1950, avec des pionniers qui rêvaient déjà de machines
             capables de « penser ».</p>
             <p>En parcourant <strong>75 ans d'histoire</strong>, vous découvrirez les grandes
             ruptures technologiques, les périodes de désillusion (les fameux « hivers de l'IA »),
             et les avancées fulminantes qui ont abouti aux outils que vous utilisez aujourd'hui.
             Comprendre cette trajectoire vous donnera une vision plus lucide des promesses et des
             limites actuelles de l'IA.</p>
-            <p><strong>Objectifs de la séance :</strong></p>
-            <ul style="margin: 12px 0 0 20px; line-height: 2;">
-              <li>Situer les grandes étapes historiques de l'IA</li>
-              <li>Identifier les figures fondatrices et leurs contributions</li>
-              <li>Comprendre les cycles d'euphorie et de désenchantement</li>
-            </ul>
+            <div class="session-objectives">
+              <p class="objectives-title">Objectifs de la séance</p>
+              <ul>
+                <li>Situer les grandes étapes historiques de l'IA</li>
+                <li>Identifier les figures fondatrices et leurs contributions</li>
+                <li>Comprendre les cycles d'euphorie et de désenchantement</li>
+              </ul>
+            </div>
           `,
           resources: [
             {
