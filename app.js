@@ -441,6 +441,29 @@ function updateProgressBar() {
   const percent = total > 0 ? Math.round((done / total) * 100) : 0;
   progressBarFill.style.width = percent + '%';
   progressPercent.textContent  = percent + '%';
+
+  /* Moyenne globale des quiz (insérée une fois, mise à jour ensuite) */
+  let avgEl = document.getElementById('sidebar-quiz-avg');
+  if (!avgEl) {
+    avgEl = document.createElement('p');
+    avgEl.id = 'sidebar-quiz-avg';
+    avgEl.className = 'sidebar-quiz-avg';
+    progressContainer.appendChild(avgEl);
+  }
+  const avg = getGlobalQuizAverage();
+  if (avg !== null) {
+    avgEl.innerHTML = `🎯 Moyenne quiz : <strong>${avg}&nbsp;%</strong>`;
+    avgEl.style.display = '';
+  } else {
+    avgEl.style.display = 'none';
+  }
+}
+
+/** Calcule la moyenne en % de tous les quiz tentés. */
+function getGlobalQuizAverage() {
+  const scores = Object.values(userDoc?.quizScores || {});
+  if (!scores.length) return null;
+  return Math.round(scores.reduce((s, q) => s + q.pct, 0) / scores.length);
 }
 
 function buildNav() {
@@ -641,6 +664,7 @@ function buildLessonHTML(module, session) {
   const isCompleted = completedSessions.has(session.id);
   const next        = nextSession(session.id);
   const ev          = session.evaluation || null;
+  const savedScore  = ev?.type === 'qcm' ? (userDoc?.quizScores?.[session.id] || null) : null;
   /* Le bouton est grisé par défaut si une évaluation est requise (et pas encore complétée) */
   const needsGate   = !isCompleted && ev !== null;
 
@@ -660,6 +684,7 @@ function buildLessonHTML(module, session) {
     <div class="lesson-meta">
       <span class="session-badge">Séance ${sessionNum} / ${allCount}</span>
       ${isCompleted ? '<span class="session-badge" style="background:rgba(34,197,94,0.1);color:#16a34a;">✅ Terminée</span>' : ''}
+      ${savedScore ? `<span class="session-badge score-badge ${savedScore.pct >= 75 ? 'score-pass' : 'score-fail'}">🎯 ${savedScore.score}/${savedScore.total} &mdash; ${savedScore.pct}&nbsp;%</span>` : ''}
     </div>
 
     <!-- Onglets de navigation -->
@@ -713,7 +738,6 @@ function buildLessonHTML(module, session) {
         <p>L'évaluation de cette séance sera disponible prochainement.</p>
       </div>`;
   } else if (ev.type === 'qcm') {
-    const savedScore = userDoc?.quizScores?.[session.id] || null;
     html += buildQcmHTML(ev.questions, savedScore);
   } else if (ev.type === 'email') {
     html += buildEmailEvalHTML();
@@ -916,6 +940,7 @@ function initQuizInteraction(questions, sessionId, onPassed) {
 
       /* Verrouiller et coloriser */
       block.querySelectorAll('.quiz-option').forEach(el => {
+        el.classList.remove('selected'); /* retire la sélection pour que correct/wrong s'affiche proprement */
         el.classList.add('locked');
         if (el.dataset.oid === q.answer) el.classList.add('correct');
       });
@@ -1202,6 +1227,7 @@ function renderUsersTable(users) {
           <th>Statut</th>
           <th>Accès (jusqu'à)</th>
           <th>Progression</th>
+          <th>Score quiz</th>
         </tr>
       </thead>
       <tbody>`;
@@ -1211,6 +1237,18 @@ function renderUsersTable(users) {
     const isApproved  = user.status === 'approved';
     const maxUnlocked = user.maxSessionUnlocked || 0;
     const pct         = total > 0 ? Math.round((done / total) * 100) : 0;
+
+    /* Score moyen des quiz */
+    const quizScores  = Object.values(user.quizScores || {});
+    const avgQuiz     = quizScores.length
+      ? Math.round(quizScores.reduce((s, q) => s + q.pct, 0) / quizScores.length)
+      : null;
+    const quizCount   = quizScores.length;
+
+    /* Détail par quiz : liste des scores séance par séance */
+    const quizDetail = quizScores.length
+      ? quizScores.map(q => `${q.score}/${q.total}`).join(', ')
+      : '';
 
     html += `
       <tr>
@@ -1237,6 +1275,12 @@ function renderUsersTable(users) {
             </div>
             <span class="progress-pct">${pct}%</span>
           </div>
+        </td>
+        <td class="admin-quiz-cell">
+          ${avgQuiz !== null
+            ? `<span class="admin-quiz-avg ${avgQuiz >= 75 ? 'score-pass' : 'score-fail'}">${avgQuiz}&nbsp;%</span>
+               <span class="admin-quiz-count">${quizCount} quiz tenté${quizCount > 1 ? 's' : ''}</span>`
+            : '<span class="admin-quiz-none">—</span>'}
         </td>
       </tr>`;
   });
