@@ -567,62 +567,74 @@
       <!-- Zone d'affichage du contenu (status: approved) -->
       <div id="lesson-view" class="lesson-view">
 
-        <!-- Page d'accueil de la plateforme -->
+        <!-- Tableau de bord de la plateforme -->
         <div id="welcome-screen" class="welcome-screen">
-          <div class="home-hero">
-            <span class="home-badge">Formation certifiante</span>
-            <h1 class="welcome-title">Formation IA &amp; Cybersécurité</h1>
-            <p class="welcome-subtitle">
-              Découvrez les outils d'Intelligence Artificielle les plus puissants du moment et
-              apprenez à les utiliser pour booster votre créativité, votre productivité et vos
-              projets professionnels.
-            </p>
-            <button class="btn-primary" id="start-btn">Reprendre ma formation →</button>
+
+          <!-- En-tête : salutation + CTA -->
+          <div class="dash-header">
+            <div>
+              <p id="dash-greeting" class="dash-greeting">👋 Bonjour !</p>
+              <h1 class="dash-title">Intelligence Artificielle &amp; Cybersécurité</h1>
+            </div>
+            <button class="btn-primary" id="start-btn">▶ Reprendre ma formation</button>
           </div>
 
+          <!-- Bannière certificat (affichée si tout est terminé) -->
           <div id="certificate-banner" class="certificate-banner hidden">
             <div class="certificate-icon">🏆</div>
             <div class="certificate-text">
               <p class="certificate-title">Formation complétée — Félicitations !</p>
-              <p class="certificate-subtitle">Vous avez validé l'intégralité des séances. Contactez votre formateur pour recevoir votre attestation officielle.</p>
+              <p class="certificate-subtitle">Vous avez validé l'intégralité des séances. Contactez votre formateur pour recevoir votre attestation.</p>
             </div>
-            <a href="mailto:davidpuzos@tisselia.com?subject=Demande%20de%20certificat&body=Bonjour%2C%20j%27ai%20compl%C3%A9t%C3%A9%20toutes%20les%20s%C3%A9ances%20de%20la%20formation%20IA%20%26%20Cybers%C3%A9curit%C3%A9." class="certificate-btn" rel="noopener noreferrer">
+            <a href="mailto:davidpuzos@tisselia.com?subject=Demande%20d%27attestation&body=Bonjour%2C%20j%27ai%20compl%C3%A9t%C3%A9%20toutes%20les%20s%C3%A9ances%20de%20la%20formation%20IA%20%26%20Cybers%C3%A9curit%C3%A9." class="certificate-btn" rel="noopener noreferrer">
               🎓 Demander mon attestation
             </a>
           </div>
 
-          <div class="home-cards">
-            <div class="home-card">
-              <div class="home-card-icon">🎯</div>
-              <h3 class="home-card-title">Objectifs</h3>
-              <ul class="home-card-list">
-                <li>Maîtriser les outils IA génératifs (texte, image, vidéo)</li>
-                <li>Comprendre les enjeux de la cybersécurité à l'ère de l'IA</li>
-                <li>Créer des contenus professionnels avec l'IA</li>
-                <li>Concevoir et présenter votre projet IA de A à Z</li>
-              </ul>
-            </div>
-            <div class="home-card">
-              <div class="home-card-icon">🗺️</div>
-              <h3 class="home-card-title">Fonctionnement</h3>
-              <ul class="home-card-list">
-                <li>Séances débloquées progressivement par votre formateur</li>
-                <li>Chaque séance contient une vidéo, un cours et une évaluation</li>
-                <li>Validez l'évaluation puis cliquez "✅ Terminé" pour progresser</li>
-                <li>Votre avancée est sauvegardée automatiquement</li>
-              </ul>
-            </div>
-            <div class="home-card">
-              <div class="home-card-icon">📅</div>
-              <h3 class="home-card-title">Programme</h3>
-              <ul class="home-card-list">
-                <li><strong>Module 1 :</strong> Découvrir &amp; créer avec l'IA (S1–S4)</li>
-                <li><strong>Module 2 :</strong> Visuels &amp; vidéo avec l'IA (S5–S8)</li>
-                <li><strong>Module 3 :</strong> Rédiger &amp; traduire (S9–S10)</li>
-                <li><strong>Module 4 :</strong> Concrétiser son projet (S11–S12)</li>
-              </ul>
+          <!-- KPI cards (remplies par JS) -->
+          <div class="dash-kpis" id="dash-kpis"></div>
+
+          <!-- Mes séances (remplies par JS) -->
+          <div class="dash-section">
+            <h2 class="dash-section-title">📚 Mes séances</h2>
+            <div id="dash-sessions" class="dash-sessions"></div>
+          </div>
+
+          <!-- Comment ça marche -->
+          <div class="dash-section">
+            <h2 class="dash-section-title">ℹ️ Comment ça marche</h2>
+            <div class="dash-howto">
+              <div class="dash-step">
+                <span class="dash-step-num">1</span>
+                <div>
+                  <strong>Séances débloquées progressivement</strong>
+                  <p>Votre formateur ouvre les séances au fur et à mesure de votre avancement.</p>
+                </div>
+              </div>
+              <div class="dash-step">
+                <span class="dash-step-num">2</span>
+                <div>
+                  <strong>Vidéo + cours + évaluation</strong>
+                  <p>Chaque séance contient une vidéo pédagogique, un cours écrit et un quiz.</p>
+                </div>
+              </div>
+              <div class="dash-step">
+                <span class="dash-step-num">3</span>
+                <div>
+                  <strong>Validez le quiz (≥ 75 %)</strong>
+                  <p>Obtenez au moins 75 % au quiz pour valider la séance et débloquer la suivante.</p>
+                </div>
+              </div>
+              <div class="dash-step">
+                <span class="dash-step-num">4</span>
+                <div>
+                  <strong>Avancée sauvegardée</strong>
+                  <p>Votre progression et vos scores sont enregistrés en temps réel dans votre profil.</p>
+                </div>
+              </div>
             </div>
           </div>
+
         </div><!-- /welcome-screen -->
 
         <div id="lesson-content" class="lesson-content hidden"></div>
