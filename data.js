@@ -79,7 +79,8 @@ const courseData = {
             {
               label: "Support de présentation — Démystifier l'IA",
               url: "https://tisselia.com/wp-content/uploads/2026/03/Comprendre-lIntelligence-Artificielle.pdf",
-              icon: "📄"
+              icon: "📄",
+              recap: true
             }
           ],
           evaluation: {
