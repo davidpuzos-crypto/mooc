@@ -137,7 +137,7 @@ const courseData = {
         {
           id: "m1s2",
           title: "Séance 2 — Histoire de l'IA : d'où ça vient ?",
-          video: null,
+          video: "https://www.youtube.com/embed/9W8H2tGLJng",
           intro: `
             <p>L'Intelligence Artificielle n'est pas une invention du XXIe siècle. Ses racines
             plongent dans les années 1950, avec des pionniers qui rêvaient déjà de machines
