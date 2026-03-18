@@ -337,7 +337,7 @@ function showPlatform() {
   updateProgressBar();
   updateCertificate();
   updateLessonNavButtons(); /* met à jour le bouton "suivante" si une séance est ouverte */
-  /* (Ré)attacher le CTA de la homepage */
+  /* CTA "Reprendre" */
   const startBtn = document.getElementById('start-btn');
   if (startBtn) {
     startBtn.onclick = () => {
@@ -345,6 +345,8 @@ function showPlatform() {
       if (id) loadSession(id);
     };
   }
+  /* Rafraîchir le tableau de bord si visible */
+  if (!welcomeScreen.classList.contains('hidden')) renderDashboard();
 }
 
 /** Réinitialise l'affichage lors de la déconnexion. */
@@ -1106,6 +1108,93 @@ function showHomePage() {
   lessonContent.classList.add('hidden');
   mainHeaderTitle.textContent = 'Intelligence Artificielle & Cybersécurité';
   refreshNavState();
+  renderDashboard();
+}
+
+/* ============================================================
+   15b. TABLEAU DE BORD — Rendu dynamique de la page d'accueil
+   ============================================================ */
+
+function renderDashboard() {
+  /* Salutation personnalisée */
+  const greetingEl = document.getElementById('dash-greeting');
+  if (greetingEl && currentUser) {
+    const name = currentUser.displayName || currentUser.email.split('@')[0];
+    greetingEl.textContent = `👋 Bonjour, ${name} !`;
+  }
+
+  /* ── KPI cards ── */
+  const kpisEl = document.getElementById('dash-kpis');
+  if (kpisEl) {
+    const total    = totalSessions();
+    const done     = completedSessions.size;
+    const pct      = total > 0 ? Math.round((done / total) * 100) : 0;
+    const avg      = getGlobalQuizAverage();
+    const quizDone = Object.keys(userDoc?.quizScores || {}).length;
+    const nextSess = allSessionsFlat().find(s => isSessionUnlocked(s.id) && !completedSessions.has(s.id));
+
+    kpisEl.innerHTML = `
+      <div class="dash-kpi">
+        <span class="dash-kpi-value">${done}<span class="dash-kpi-total"> / ${total}</span></span>
+        <span class="dash-kpi-label">Séances terminées</span>
+        <div class="dash-kpi-bar"><div style="width:${pct}%"></div></div>
+      </div>
+      <div class="dash-kpi ${avg !== null ? (avg >= 75 ? 'kpi-pass' : 'kpi-fail') : ''}">
+        <span class="dash-kpi-value">${avg !== null ? avg + '&nbsp;%' : '—'}</span>
+        <span class="dash-kpi-label">Moyenne des quiz</span>
+        ${avg !== null ? `<div class="dash-kpi-bar kpi-bar-score"><div style="width:${avg}%"></div></div>` : ''}
+      </div>
+      <div class="dash-kpi">
+        <span class="dash-kpi-value">${quizDone}<span class="dash-kpi-total"> / ${total}</span></span>
+        <span class="dash-kpi-label">Quiz complétés</span>
+      </div>
+      <div class="dash-kpi dash-kpi-next">
+        <span class="dash-kpi-label">Prochaine séance</span>
+        <span class="dash-next-title">${nextSess ? nextSess.title : done >= total ? '🎉 Formation terminée !' : '🔒 Aucune séance disponible'}</span>
+        ${nextSess ? `<button class="dash-next-btn" data-session-id="${nextSess.id}">Commencer →</button>` : ''}
+      </div>`;
+
+    /* Listener sur le bouton "Commencer" de la KPI */
+    kpisEl.querySelector('.dash-next-btn')?.addEventListener('click', e => {
+      loadSession(e.target.dataset.sessionId);
+    });
+  }
+
+  /* ── Liste des séances par module ── */
+  const sessionsEl = document.getElementById('dash-sessions');
+  if (!sessionsEl) return;
+
+  let html = '';
+  courseData.modules.forEach(mod => {
+    html += `<div class="dash-module">
+      <div class="dash-module-header">${mod.title}</div>`;
+    mod.sessions.forEach(session => {
+      const completed = completedSessions.has(session.id);
+      const unlocked  = isSessionUnlocked(session.id);
+      const score     = userDoc?.quizScores?.[session.id];
+      const stateClass = completed ? 'sess-done' : unlocked ? 'sess-current' : 'sess-locked';
+      const icon = completed ? '✅' : unlocked ? '▶️' : '🔒';
+      const scoreHtml = score
+        ? `<span class="dash-sess-score ${score.pct >= 75 ? 'score-pass' : 'score-fail'}">🎯 ${score.score}/${score.total} — ${score.pct}&nbsp;%</span>`
+        : '';
+      html += `
+        <div class="dash-session ${stateClass}" ${unlocked ? `data-session-id="${session.id}" tabindex="0" role="button"` : ''}>
+          <span class="dash-sess-icon">${icon}</span>
+          <span class="dash-sess-title">${session.title}</span>
+          ${scoreHtml}
+        </div>`;
+    });
+    html += '</div>';
+  });
+  sessionsEl.innerHTML = html;
+
+  /* Clic / Entrée → ouvrir la séance */
+  sessionsEl.querySelectorAll('.dash-session[data-session-id]').forEach(el => {
+    el.addEventListener('click', () => loadSession(el.dataset.sessionId));
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); loadSession(el.dataset.sessionId); }
+    });
+  });
 }
 
 /* ============================================================
