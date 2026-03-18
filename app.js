@@ -713,13 +713,31 @@ function buildLessonHTML(module, session) {
     html += `<div class="video-placeholder">🎬 La vidéo de cette séance sera disponible prochainement.</div>`;
   }
 
+  /* Fiche récapitulative (ressources flagguées recap:true) — juste après la vidéo */
+  const recapRes = session.resources?.filter(r => r.recap) || [];
+  if (recapRes.length) {
+    recapRes.forEach(res => {
+      html += `
+        <a href="${res.url}" class="recap-card" target="_blank" rel="noopener noreferrer">
+          <div class="recap-card-icon">📋</div>
+          <div class="recap-card-body">
+            <p class="recap-card-label">Fiche récapitulative</p>
+            <p class="recap-card-title">${res.label}</p>
+            <p class="recap-card-hint">Retrouvez en PDF tous les points clés de cette séance</p>
+          </div>
+          <div class="recap-card-arrow">Ouvrir le PDF →</div>
+        </a>`;
+    });
+  }
+
   /* Texte d'introduction */
   if (session.intro) html += `<div class="lesson-intro">${session.intro}</div>`;
 
-  /* Ressources téléchargeables */
-  if (session.resources?.length) {
+  /* Autres ressources téléchargeables (non recap) */
+  const otherRes = session.resources?.filter(r => !r.recap) || [];
+  if (otherRes.length) {
     html += `<div class="resources-section"><p class="section-title">📎 Ressources</p>`;
-    session.resources.forEach(res => {
+    otherRes.forEach(res => {
       html += `<a href="${res.url}" class="resource-link" target="_blank" rel="noopener noreferrer">
         <span class="link-icon">${res.icon || '📄'}</span>${res.label}</a>`;
     });
