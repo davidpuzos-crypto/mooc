@@ -54,7 +54,7 @@ const courseData = {
         {
           id: "m1s1",
           title: "Séance 1 — Démystifier l'Intelligence Artificielle",
-          video: "https://www.youtube.com/embed/9W8H2tGLJng",
+          video: "https://www.youtube.com/embed/aSlyjXijNoA",
           intro: `
             <p>ChatGPT impressionne, mais savez-vous vraiment ce qui se passe sous le capot ?
             Dans cette séance, nous allons lever le voile sur le fonctionnement réel des outils
