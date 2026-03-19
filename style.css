@@ -2264,7 +2264,7 @@ img, iframe { max-width: 100%; display: block; }
   font-family: 'Poppins', sans-serif;
   color: #1e293b;
   background: #fff;
-  overflow-x: hidden;
+  overflow-x: clip; /* clip ≠ hidden : ne crée pas de scroll-container, sticky fonctionne */
 }
 
 /* ── Scroll reveal animation ── */
