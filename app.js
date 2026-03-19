@@ -1826,3 +1826,24 @@ document.getElementById('reset-send-btn').addEventListener('click', async () => 
     sendBtn.textContent = 'Envoyer le lien de réinitialisation';
   }
 });
+
+/* --- Lecteur tutoriel plateforme (dashboard) --- */
+(function () {
+  const player  = document.getElementById('dash-tuto-player');
+  if (!player) return;
+  const video   = document.getElementById('dash-tuto-video');
+  const overlay = document.getElementById('dash-tuto-overlay');
+  const bigBtn  = document.getElementById('dash-tuto-bigbtn');
+
+  function play() {
+    video.play();
+    overlay.classList.add('lp-ply-hidden');
+  }
+  function togglePause() {
+    if (video.paused) { video.play(); } else { video.pause(); }
+  }
+
+  bigBtn.addEventListener('click', play);
+  video.addEventListener('click', togglePause);
+  video.addEventListener('ended', () => overlay.classList.remove('lp-ply-hidden'));
+})();
