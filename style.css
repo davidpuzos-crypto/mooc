@@ -2284,13 +2284,22 @@ img, iframe { max-width: 100%; display: block; }
   position: sticky;
   top: 0;
   z-index: 500;
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(0,0,0,0.06);
-  transition: box-shadow 0.3s;
+  background: transparent;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  border-bottom: 1px solid transparent;
+  box-shadow: none;
+  transition: background 0.4s ease, backdrop-filter 0.4s ease,
+              -webkit-backdrop-filter 0.4s ease, border-color 0.4s ease,
+              box-shadow 0.4s ease;
 }
-.lp-header.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
+.lp-header.scrolled {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
 .lp-header-inner {
   max-width: 1160px;
   margin: 0 auto;
