@@ -389,6 +389,28 @@ img, iframe { max-width: 100%; display: block; }
 .session-description p { margin-bottom: 18px; }
 .session-description p:last-child { margin-bottom: 0; }
 
+/* Héro description : texte gauche + image droite */
+.desc-hero {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  margin-bottom: 28px;
+}
+.desc-hero-text { flex: 1; min-width: 0; }
+.desc-hero-text p:last-child { margin-bottom: 0; }
+.desc-hero-img {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+@media (max-width: 640px) {
+  .desc-hero { flex-direction: column-reverse; gap: 16px; }
+  .desc-hero-img { width: 100%; height: auto; aspect-ratio: 1 / 1; }
+}
+
 .session-objectives {
   margin-top: 28px;
   padding: 22px 28px;

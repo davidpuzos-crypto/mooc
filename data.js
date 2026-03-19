@@ -59,17 +59,24 @@ const courseData = {
             modèles de langage — en introduisant le concept de « perroquet stochastique »
             et le phénomène d'hallucination.`,
           description: `
-            <p>ChatGPT impressionne, mais savez-vous vraiment ce qui se passe sous le capot ?
-            Dans cette séance, nous allons lever le voile sur le fonctionnement réel des outils
-            d'IA générative et démonter quelques idées reçues très répandues.</p>
-            <p>Un concept clé à retenir : le <strong>« perroquet stochastique »</strong>. Cette
-            métaphore, proposée par des chercheuses en linguistique, décrit les grands modèles de
-            langage comme des systèmes qui assemblent des mots de façon statistiquement cohérente —
-            sans pour autant <em>comprendre</em> quoi que ce soit. ChatGPT ne raisonne pas : il
-            prédit le mot suivant le plus probable, encore et encore.</p>
-            <p>Comprendre cela change tout : vous saurez pourquoi l'IA peut se tromper avec
-            assurance (ce qu'on appelle les <strong>« hallucinations »</strong>), et pourquoi
-            certains termes comme « intelligence » ou « comprend » sont trompeurs.</p>
+            <div class="desc-hero">
+              <div class="desc-hero-text">
+                <p>ChatGPT impressionne, mais savez-vous vraiment ce qui se passe sous le capot ?
+                Dans cette séance, nous allons lever le voile sur le fonctionnement réel des outils
+                d'IA générative et démonter quelques idées reçues très répandues.</p>
+                <p>Un concept clé à retenir : le <strong>« perroquet stochastique »</strong>. Cette
+                métaphore, proposée par des chercheuses en linguistique, décrit les grands modèles de
+                langage comme des systèmes qui assemblent des mots de façon statistiquement cohérente —
+                sans pour autant <em>comprendre</em> quoi que ce soit. ChatGPT ne raisonne pas : il
+                prédit le mot suivant le plus probable, encore et encore.</p>
+                <p>Comprendre cela change tout : vous saurez pourquoi l'IA peut se tromper avec
+                assurance (ce qu'on appelle les <strong>« hallucinations »</strong>), et pourquoi
+                certains termes comme « intelligence » ou « comprend » sont trompeurs.</p>
+              </div>
+              <img src="https://tisselia.com/wp-content/uploads/2026/03/Seance-1.png"
+                alt="Illustration — Démystifier l'Intelligence Artificielle"
+                class="desc-hero-img" />
+            </div>
             <div class="session-objectives">
               <p class="objectives-title">Objectifs de la séance</p>
               <ul>
@@ -147,14 +154,21 @@ const courseData = {
           videoDesc: `Un voyage de 75 ans à travers l'histoire de l'IA : des pionniers des années 1950
             aux révolutions du deep learning, en passant par les deux « hivers de l'IA ».`,
           description: `
-            <p>L'Intelligence Artificielle n'est pas une invention du XXI<sup>e</sup> siècle. Ses
-            racines plongent dans les années 1950, avec des pionniers qui rêvaient déjà de machines
-            capables de « penser ».</p>
-            <p>En parcourant <strong>75 ans d'histoire</strong>, vous découvrirez les grandes
-            ruptures technologiques, les périodes de désillusion (les fameux « hivers de l'IA »),
-            et les avancées fulminantes qui ont abouti aux outils que vous utilisez aujourd'hui.
-            Comprendre cette trajectoire vous donnera une vision plus lucide des promesses et des
-            limites actuelles de l'IA.</p>
+            <div class="desc-hero">
+              <div class="desc-hero-text">
+                <p>L'Intelligence Artificielle n'est pas une invention du XXI<sup>e</sup> siècle. Ses
+                racines plongent dans les années 1950, avec des pionniers qui rêvaient déjà de machines
+                capables de « penser ».</p>
+                <p>En parcourant <strong>75 ans d'histoire</strong>, vous découvrirez les grandes
+                ruptures technologiques, les périodes de désillusion (les fameux « hivers de l'IA »),
+                et les avancées fulminantes qui ont abouti aux outils que vous utilisez aujourd'hui.
+                Comprendre cette trajectoire vous donnera une vision plus lucide des promesses et des
+                limites actuelles de l'IA.</p>
+              </div>
+              <img src="https://tisselia.com/wp-content/uploads/2026/03/Seance-2.png"
+                alt="Illustration — Histoire de l'Intelligence Artificielle"
+                class="desc-hero-img" />
+            </div>
             <div class="session-objectives">
               <p class="objectives-title">Objectifs de la séance</p>
               <ul>
