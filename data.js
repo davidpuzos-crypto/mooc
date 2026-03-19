@@ -59,17 +59,24 @@ const courseData = {
             modèles de langage — en introduisant le concept de « perroquet stochastique »
             et le phénomène d'hallucination.`,
           description: `
-            <p>ChatGPT impressionne, mais savez-vous vraiment ce qui se passe sous le capot ?
-            Dans cette séance, nous allons lever le voile sur le fonctionnement réel des outils
-            d'IA générative et démonter quelques idées reçues très répandues.</p>
-            <p>Un concept clé à retenir : le <strong>« perroquet stochastique »</strong>. Cette
-            métaphore, proposée par des chercheuses en linguistique, décrit les grands modèles de
-            langage comme des systèmes qui assemblent des mots de façon statistiquement cohérente —
-            sans pour autant <em>comprendre</em> quoi que ce soit. ChatGPT ne raisonne pas : il
-            prédit le mot suivant le plus probable, encore et encore.</p>
-            <p>Comprendre cela change tout : vous saurez pourquoi l'IA peut se tromper avec
-            assurance (ce qu'on appelle les <strong>« hallucinations »</strong>), et pourquoi
-            certains termes comme « intelligence » ou « comprend » sont trompeurs.</p>
+            <div class="desc-hero">
+              <div class="desc-hero-text">
+                <p>ChatGPT impressionne, mais savez-vous vraiment ce qui se passe sous le capot ?
+                Dans cette séance, nous allons lever le voile sur le fonctionnement réel des outils
+                d'IA générative et démonter quelques idées reçues très répandues.</p>
+                <p>Un concept clé à retenir : le <strong>« perroquet stochastique »</strong>. Cette
+                métaphore, proposée par des chercheuses en linguistique, décrit les grands modèles de
+                langage comme des systèmes qui assemblent des mots de façon statistiquement cohérente —
+                sans pour autant <em>comprendre</em> quoi que ce soit. ChatGPT ne raisonne pas : il
+                prédit le mot suivant le plus probable, encore et encore.</p>
+                <p>Comprendre cela change tout : vous saurez pourquoi l'IA peut se tromper avec
+                assurance (ce qu'on appelle les <strong>« hallucinations »</strong>), et pourquoi
+                certains termes comme « intelligence » ou « comprend » sont trompeurs.</p>
+              </div>
+              <img src="https://tisselia.com/wp-content/uploads/2026/03/Seance-1.png"
+                alt="Illustration — Démystifier l'Intelligence Artificielle"
+                class="desc-hero-img" />
+            </div>
             <div class="session-objectives">
               <p class="objectives-title">Objectifs de la séance</p>
               <ul>
