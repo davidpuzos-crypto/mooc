@@ -187,7 +187,7 @@ const courseData = {
             },
             {
               label: "Frise chronologique — 75 ans d'histoire de l'IA",
-              url: "#",
+              url: "https://tisselia.com/wp-content/uploads/2026/03/Frise-chronologique-—-75-ans-dhistoire-de-lIA.pdf",
               icon: "📅"
             }
           ],
