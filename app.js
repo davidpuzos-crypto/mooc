@@ -1659,6 +1659,142 @@ const revealObserver = new IntersectionObserver((entries) => {
 
 document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
+/* --- Lecteur vidéo custom --- */
+(function () {
+  const player  = document.getElementById('lp-player');
+  if (!player) return;
+
+  const video   = document.getElementById('lp-video');
+  const overlay = document.getElementById('lp-ply-overlay');
+  const bigBtn  = document.getElementById('lp-ply-bigbtn');
+  const ppBtn   = document.getElementById('lp-ply-pp');
+  const timeEl  = document.getElementById('lp-ply-time');
+  const seek    = document.getElementById('lp-ply-seek');
+  const buf     = document.getElementById('lp-ply-seek-buf');
+  const fill    = document.getElementById('lp-ply-seek-fill');
+  const thumb   = document.getElementById('lp-ply-seek-thumb');
+  const muteBtn = document.getElementById('lp-ply-mute');
+  const volSldr = document.getElementById('lp-ply-vol');
+  const fsBtn   = document.getElementById('lp-ply-fs');
+
+  let hideTimer = null;
+  let started   = false;
+  let isSeeking = false;
+
+  /* ── utilitaires ──────────────────────────────────── */
+  function fmt(s) {
+    if (!isFinite(s)) return '0:00';
+    const m = Math.floor(s / 60);
+    return `${m}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  }
+
+  function syncPlayIcon(playing) {
+    ppBtn.querySelector('.lp-icon-play').style.display  = playing ? 'none' : '';
+    ppBtn.querySelector('.lp-icon-pause').style.display = playing ? ''     : 'none';
+  }
+
+  function syncMuteIcon() {
+    const muted = video.muted || video.volume === 0;
+    muteBtn.querySelector('.lp-icon-vol').style.display   = muted ? 'none' : '';
+    muteBtn.querySelector('.lp-icon-muted').style.display = muted ? ''     : 'none';
+  }
+
+  function syncFsIcon() {
+    const isFs = !!document.fullscreenElement;
+    fsBtn.querySelector('.lp-icon-fs').style.display  = isFs ? 'none' : '';
+    fsBtn.querySelector('.lp-icon-efs').style.display = isFs ? ''     : 'none';
+  }
+
+  function updateProgress() {
+    const pct = video.duration ? video.currentTime / video.duration : 0;
+    const trackW = seek.clientWidth - 24;
+    fill.style.width  = `${pct * 100}%`;
+    thumb.style.left  = `${12 + pct * trackW}px`;
+    timeEl.textContent = `${fmt(video.currentTime)} / ${fmt(video.duration)}`;
+  }
+
+  function updateBuffer() {
+    if (video.buffered.length) {
+      buf.style.width = `${(video.buffered.end(video.buffered.length - 1) / video.duration) * 100}%`;
+    }
+  }
+
+  function showCtrl() {
+    player.classList.add('show-ctrl');
+    clearTimeout(hideTimer);
+    if (!video.paused) hideTimer = setTimeout(() => player.classList.remove('show-ctrl'), 2800);
+  }
+
+  function seekTo(clientX) {
+    const rect = seek.getBoundingClientRect();
+    const x    = Math.max(0, Math.min(clientX - rect.left, rect.width));
+    video.currentTime = (x / rect.width) * (video.duration || 0);
+    updateProgress();
+  }
+
+  /* ── play / pause ─────────────────────────────────── */
+  bigBtn.addEventListener('click', () => { video.play(); started = true; });
+  ppBtn.addEventListener('click',  (e) => { e.stopPropagation(); video.paused ? video.play() : video.pause(); });
+  player.addEventListener('click', (e) => {
+    if (!started || e.target === ppBtn || e.target === muteBtn || e.target === fsBtn) return;
+    if (e.target === video || e.target === player) { video.paused ? video.play() : video.pause(); }
+  });
+
+  video.addEventListener('play', () => {
+    syncPlayIcon(true);
+    overlay.classList.add('lp-ply-hidden');
+    showCtrl();
+  });
+  video.addEventListener('pause', () => {
+    syncPlayIcon(false);
+    clearTimeout(hideTimer);
+    player.classList.add('show-ctrl');
+    if (!video.ended) overlay.classList.remove('lp-ply-hidden');
+  });
+  video.addEventListener('ended', () => {
+    syncPlayIcon(false);
+    overlay.classList.remove('lp-ply-hidden');
+    player.classList.add('show-ctrl');
+  });
+
+  /* ── progression ──────────────────────────────────── */
+  video.addEventListener('timeupdate',     updateProgress);
+  video.addEventListener('progress',       updateBuffer);
+  video.addEventListener('durationchange', updateProgress);
+
+  seek.addEventListener('mousedown', (e) => { isSeeking = true; seekTo(e.clientX); });
+  document.addEventListener('mousemove', (e) => { if (isSeeking) seekTo(e.clientX); });
+  document.addEventListener('mouseup',   () => { isSeeking = false; });
+  seek.addEventListener('touchstart', (e) => seekTo(e.touches[0].clientX), { passive: true });
+  seek.addEventListener('touchmove',  (e) => seekTo(e.touches[0].clientX), { passive: true });
+
+  /* ── volume ───────────────────────────────────────── */
+  volSldr.addEventListener('input', () => {
+    video.volume = parseFloat(volSldr.value);
+    video.muted  = video.volume === 0;
+    syncMuteIcon();
+  });
+  muteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    video.muted = !video.muted;
+    volSldr.value = video.muted ? '0' : String(video.volume || 0.7);
+    syncMuteIcon();
+  });
+
+  /* ── plein écran ──────────────────────────────────── */
+  fsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.fullscreenElement ? document.exitFullscreen() : player.requestFullscreen();
+  });
+  document.addEventListener('fullscreenchange', syncFsIcon);
+
+  /* ── contrôles : affichage au survol ──────────────── */
+  player.addEventListener('mousemove',  showCtrl);
+  player.addEventListener('mouseleave', () => {
+    if (!video.paused) { clearTimeout(hideTimer); hideTimer = setTimeout(() => player.classList.remove('show-ctrl'), 400); }
+  });
+})();
+
 /* --- Envoi de l'email de réinitialisation --- */
 document.getElementById('reset-send-btn').addEventListener('click', async () => {
   const email     = document.getElementById('reset-email').value.trim();
