@@ -2519,8 +2519,8 @@ img, iframe { max-width: 100%; display: block; }
 /* Bouton + anneau */
 .lp-ply-btn-wrap {
   position: relative;
-  width: 88px;
-  height: 88px;
+  width: 76px;
+  height: 76px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2528,7 +2528,7 @@ img, iframe { max-width: 100%; display: block; }
 }
 .lp-ply-ring {
   position: absolute;
-  inset: -12px;
+  inset: -10px;
   border-radius: 50%;
   border: 2px solid rgba(77, 184, 200, 0.55);
   animation: lp-pulse 2.4s ease-out infinite;
@@ -2543,8 +2543,8 @@ img, iframe { max-width: 100%; display: block; }
 .lp-ply-bigbtn {
   position: relative;
   z-index: 1;
-  width: 88px;
-  height: 88px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   background: var(--gradient);
   border: none;
