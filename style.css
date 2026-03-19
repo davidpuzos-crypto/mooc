@@ -2435,6 +2435,21 @@ img, iframe { max-width: 100%; display: block; }
   align-items: center;
 }
 
+/* Video embed (YouTube) */
+.lp-video-embed {
+  border-radius: 20px;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.08);
+  width: 100%;
+}
+.lp-video-embed iframe {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: none;
+}
+
 /* Video placeholder */
 .lp-video-placeholder {
   border-radius: 20px;
