@@ -720,14 +720,22 @@ function buildLessonHTML(module, session) {
     html += `<p class="video-caption">${session.videoDesc}</p>`;
   }
 
-  /* Vidéo YouTube */
+  /* Vidéo YouTube ou fichier direct */
   if (session.video) {
-    html += `
-      <div class="video-wrapper">
-        <iframe src="${session.video}" title="${session.title}"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen></iframe>
-      </div>`;
+    const isYouTube = session.video.includes('youtube.com') || session.video.includes('youtu.be');
+    if (isYouTube) {
+      html += `
+        <div class="video-wrapper">
+          <iframe src="${session.video}" title="${session.title}"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen></iframe>
+        </div>`;
+    } else {
+      html += `
+        <div class="video-wrapper">
+          <video src="${session.video}" controls playsinline></video>
+        </div>`;
+    }
   } else {
     html += `<div class="video-placeholder">🎬 La vidéo de cette séance sera disponible prochainement.</div>`;
   }
@@ -1140,7 +1148,7 @@ function showHomePage() {
   currentSessionId = null;
   welcomeScreen.classList.remove('hidden');
   lessonContent.classList.add('hidden');
-  mainHeaderTitle.textContent = 'Intelligence Artificielle & Cybersécurité';
+  mainHeaderTitle.textContent = 'Tableau de bord';
   refreshNavState();
   renderDashboard();
 }
