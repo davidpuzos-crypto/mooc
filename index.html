@@ -578,6 +578,10 @@
       <div class="sidebar-home-wrapper hidden" id="sidebar-home-wrapper">
         <button id="home-btn" class="sidebar-home-btn">
           <span class="home-btn-icon">🏠</span>
+          <span>Accueil</span>
+        </button>
+        <button id="dashboard-btn" class="sidebar-home-btn">
+          <span class="home-btn-icon">📊</span>
           <span>Tableau de bord</span>
         </button>
       </div>
@@ -640,8 +644,73 @@
       <!-- Zone d'affichage du contenu (status: approved) -->
       <div id="lesson-view" class="lesson-view">
 
+        <!-- ======================================================
+             PAGE D'ACCUEIL — première page après connexion
+        ====================================================== -->
+        <div id="home-screen" class="home-screen hidden">
+
+          <div class="home-header">
+            <div class="home-header-text">
+              <p id="home-greeting" class="home-greeting">Bienvenue !</p>
+              <p class="home-header-sub">Votre espace de formation Intelligence Artificielle &amp; Cybersécurité.</p>
+            </div>
+            <button id="home-dashboard-cta" class="btn-primary">Mon tableau de bord →</button>
+          </div>
+
+          <div class="home-section">
+            <h2 class="home-section-title">Présentation de la plateforme</h2>
+            <div class="home-video-wrap">
+              <video
+                src="https://tisselia.com/wp-content/uploads/2026/03/Video-dintroduction-a-la-formation.mp4"
+                controls playsinline class="home-video">
+              </video>
+            </div>
+          </div>
+
+          <div class="home-section home-howto">
+            <h2 class="home-section-title">Comment ça marche ?</h2>
+            <div class="home-steps">
+              <div class="home-step">
+                <span class="home-step-num">1</span>
+                <div>
+                  <strong>Séances débloquées progressivement</strong>
+                  <p>Votre formateur ouvre les séances au fur et à mesure de votre avancement.</p>
+                </div>
+              </div>
+              <div class="home-step">
+                <span class="home-step-num">2</span>
+                <div>
+                  <strong>Vidéo, cours et fiche récap</strong>
+                  <p>Chaque séance contient une vidéo pédagogique et un support PDF téléchargeable.</p>
+                </div>
+              </div>
+              <div class="home-step">
+                <span class="home-step-num">3</span>
+                <div>
+                  <strong>Validez le quiz (≥ 75 %)</strong>
+                  <p>Obtenez au moins 75 % au quiz pour valider la séance et débloquer la suivante.</p>
+                </div>
+              </div>
+              <div class="home-step">
+                <span class="home-step-num">4</span>
+                <div>
+                  <strong>Progression sauvegardée</strong>
+                  <p>Vos scores et votre avancement sont enregistrés en temps réel dans votre profil.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="home-cta">
+            <button id="home-dashboard-cta2" class="btn-primary home-cta-btn">
+              Accéder à mon tableau de bord →
+            </button>
+          </div>
+
+        </div><!-- /home-screen -->
+
         <!-- Tableau de bord de la plateforme -->
-        <div id="welcome-screen" class="welcome-screen">
+        <div id="welcome-screen" class="welcome-screen hidden">
 
           <!-- En-tête -->
           <div class="dash-header">

@@ -50,6 +50,7 @@ let unsubscribeUsers  = null;   // cleanup du listener Firestore (collection use
 let currentSessionId  = null;   // ID de la séance actuellement affichée
 let completedSessions = new Set(); // miroir local de userDoc.completedSessions
 let adminPanelActive  = false;  // true quand le tableau de bord admin est affiché
+let platformShown     = false;  // true après le premier affichage de la plateforme (évite de re-naviguer sur Accueil à chaque update Firestore)
 
 /* ============================================================
    3. RÉFÉRENCES DOM
@@ -74,6 +75,7 @@ const authResetView     = document.getElementById('auth-reset-view');
 const pendingScreen      = document.getElementById('pending-screen');
 const lessonView         = document.getElementById('lesson-view');
 const lessonContent      = document.getElementById('lesson-content');
+const homeScreen         = document.getElementById('home-screen');
 const welcomeScreen      = document.getElementById('welcome-screen');
 const progressContainer  = document.getElementById('progress-container');
 const progressBarFill    = document.getElementById('progress-bar-fill');
@@ -338,25 +340,24 @@ function showPlatform() {
   updateCertificate();
   updateLessonNavButtons(); /* met à jour le bouton "suivante" si une séance est ouverte */
   /* CTA "Reprendre" */
-  const startBtn = document.getElementById('start-btn');
-  if (startBtn) {
-    startBtn.onclick = () => {
-      const id = getResumeSessionId();
-      if (id) loadSession(id);
-    };
+  if (!platformShown) {
+    platformShown = true;
+    showHomePage();
+  } else if (!welcomeScreen.classList.contains('hidden')) {
+    renderDashboard();
   }
-  /* Rafraîchir le tableau de bord si visible */
-  if (!welcomeScreen.classList.contains('hidden')) renderDashboard();
 }
 
 /** Réinitialise l'affichage lors de la déconnexion. */
 function hidePlatform() {
   adminPanelActive = false;
+  platformShown    = false;
   adminPanel.classList.add('hidden');
   pendingScreen.classList.add('hidden');
   lessonView.classList.remove('hidden');
   lessonContent.classList.add('hidden');
-  welcomeScreen.classList.remove('hidden');
+  homeScreen.classList.add('hidden');
+  welcomeScreen.classList.add('hidden');
   progressContainer.classList.add('hidden');
   sidebarHomeWrapper.classList.add('hidden');
   courseNav.classList.add('hidden');
@@ -561,7 +562,11 @@ function refreshNavState() {
     }
   });
 
-  homeBtn.classList.toggle('active', currentSessionId === null);
+  const isHomeView = !homeScreen.classList.contains('hidden');
+  const isDashView = !welcomeScreen.classList.contains('hidden');
+  homeBtn.classList.toggle('active', isHomeView);
+  const dashBtnEl = document.getElementById('dashboard-btn');
+  if (dashBtnEl) dashBtnEl.classList.toggle('active', isDashView);
 
   /* Scroll automatique vers la séance active dans la sidebar */
   const activeBtn = courseNav.querySelector('.session-btn.active');
@@ -637,6 +642,7 @@ function loadSession(sessionId) {
   const { module, session } = found;
   currentSessionId = sessionId;
 
+  homeScreen.classList.add('hidden');
   welcomeScreen.classList.add('hidden');
   lessonContent.classList.remove('hidden');
   mainHeaderTitle.textContent = session.title;
@@ -1144,13 +1150,36 @@ async function markSessionComplete(sessionId, completeBtn) {
    ============================================================ */
 
 function showHomePage() {
-  hideAdminPanel(); /* ferme le panel admin si actif */
+  hideAdminPanel();
   currentSessionId = null;
+  homeScreen.classList.remove('hidden');
+  welcomeScreen.classList.add('hidden');
+  lessonContent.classList.add('hidden');
+  mainHeaderTitle.textContent = 'Accueil';
+  refreshNavState();
+  const greetingEl = document.getElementById('home-greeting');
+  if (greetingEl && currentUser) {
+    const name = currentUser.displayName || currentUser.email.split('@')[0];
+    greetingEl.textContent = `👋 Bonjour, ${name} !`;
+  }
+}
+
+function showDashboard() {
+  hideAdminPanel();
+  currentSessionId = null;
+  homeScreen.classList.add('hidden');
   welcomeScreen.classList.remove('hidden');
   lessonContent.classList.add('hidden');
   mainHeaderTitle.textContent = 'Tableau de bord';
   refreshNavState();
   renderDashboard();
+  const startBtn = document.getElementById('start-btn');
+  if (startBtn) {
+    startBtn.onclick = () => {
+      const id = getResumeSessionId();
+      if (id) loadSession(id);
+    };
+  }
 }
 
 /* ============================================================
@@ -1476,6 +1505,14 @@ homeBtn.addEventListener('click', () => {
   closeSidebarMobile();
   showHomePage();
 });
+
+document.getElementById('dashboard-btn').addEventListener('click', () => {
+  closeSidebarMobile();
+  showDashboard();
+});
+
+document.getElementById('home-dashboard-cta').addEventListener('click', showDashboard);
+document.getElementById('home-dashboard-cta2').addEventListener('click', showDashboard);
 
 /* Logo sidebar → retour au tableau de bord */
 document.querySelector('.sidebar .logo').addEventListener('click', () => {
