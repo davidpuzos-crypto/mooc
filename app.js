@@ -720,20 +720,20 @@ function buildLessonHTML(module, session) {
     html += `<p class="video-caption">${session.videoDesc}</p>`;
   }
 
-  /* Vidéo YouTube ou fichier direct */
+  /* Vidéo : iframe (YouTube, Canva…) ou fichier direct (.mp4) */
   if (session.video) {
-    const isYouTube = session.video.includes('youtube.com') || session.video.includes('youtu.be');
-    if (isYouTube) {
+    const isDirectFile = /\.(mp4|webm|ogg)(\?|$)/i.test(session.video);
+    if (isDirectFile) {
       html += `
         <div class="video-wrapper">
-          <iframe src="${session.video}" title="${session.title}"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen></iframe>
+          <video src="${session.video}" controls playsinline></video>
         </div>`;
     } else {
       html += `
         <div class="video-wrapper">
-          <video src="${session.video}" controls playsinline></video>
+          <iframe src="${session.video}" title="${session.title}"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+            allowfullscreen></iframe>
         </div>`;
     }
   } else {
