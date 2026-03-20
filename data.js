@@ -43,36 +43,6 @@ const courseData = {
   modules: [
 
     /* ============================================================
-       MODULE 0 : Introduction — Fonctionnement de la plateforme
-    ============================================================ */
-    {
-      id: "m0",
-      title: "Introduction",
-      sessions: [
-        {
-          id: "m0s0",
-          title: "Séance 0 — Fonctionnement de la plateforme",
-          video: "https://tisselia.com/wp-content/uploads/2026/03/Video-dintroduction-a-la-formation.mp4",
-          videoDesc: null,
-          description: `
-            <div class="session-objectives">
-              <p class="objectives-title">Bienvenue sur votre espace de formation !</p>
-              <p style="margin-bottom:20px;">Cette séance d'introduction vous explique le fonctionnement de la plateforme afin que vous puissiez démarrer votre parcours dans les meilleures conditions.</p>
-              <ul>
-                <li><strong>Séances débloquées progressivement</strong> — Votre formateur ouvre les séances au fur et à mesure de votre avancement.</li>
-                <li><strong>Vidéo, cours et fiche récap</strong> — Chaque séance contient une vidéo pédagogique et un support PDF téléchargeable.</li>
-                <li><strong>Validez le quiz (≥ 75 %)</strong> — Obtenez au moins 75 % au quiz pour valider la séance et débloquer la suivante.</li>
-                <li><strong>Progression sauvegardée</strong> — Vos scores et votre avancement sont enregistrés en temps réel dans votre profil.</li>
-              </ul>
-            </div>
-          `,
-          resources: [],
-          evaluation: null
-        }
-      ]
-    },
-
-    /* ============================================================
        MODULE 1 : Découvrir, s'initier et être créatif avec l'IA
     ============================================================ */
     {
