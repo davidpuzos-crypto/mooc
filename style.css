@@ -467,6 +467,26 @@ img, iframe { max-width: 100%; display: block; }
   line-height: 1.6;
 }
 
+/* Lien fallback Canva (mobile) */
+.canva-fallback-btn {
+  display: inline-block;
+  margin-top: 10px;
+  margin-bottom: 28px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  background: rgba(0,0,0,0.03);
+  border: 1px solid rgba(0,0,0,0.09);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  transition: background var(--transition), color var(--transition);
+  text-decoration: none;
+}
+.canva-fallback-btn:hover {
+  background: rgba(77,184,200,0.08);
+  color: var(--cyan);
+  border-color: rgba(77,184,200,0.25);
+}
+
 /* Texte introduction (legacy) */
 .lesson-intro {
   font-size: 0.97rem;

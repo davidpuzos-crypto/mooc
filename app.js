@@ -734,6 +734,19 @@ function buildLessonHTML(module, session) {
         <div class="video-wrapper">
           <video src="${session.video}" controls playsinline></video>
         </div>`;
+    } else if (session.video.includes('canva.com')) {
+      /* Canva : attributs exacts recommandés par Canva + lien fallback pour mobile */
+      const watchUrl = session.video.replace(/[?&]embed.*$/, '');
+      html += `
+        <div class="video-wrapper">
+          <iframe src="${session.video}" title="${session.title}"
+            loading="lazy"
+            allow="fullscreen"
+            allowfullscreen="allowfullscreen"></iframe>
+        </div>
+        <a href="${watchUrl}" target="_blank" rel="noopener noreferrer" class="canva-fallback-btn">
+          📱 La vidéo ne s'affiche pas ? Ouvrir sur Canva →
+        </a>`;
     } else {
       html += `
         <div class="video-wrapper">
