@@ -84,10 +84,8 @@ const courseData = {
         {
           id: "m1s1",
           title: "Séance 1 — Démystifier l'Intelligence Artificielle",
-          video: "https://www.youtube.com/embed/aSlyjXijNoA",
-          videoDesc: `Cette vidéo lève le voile sur le fonctionnement réel de ChatGPT et des grands
-            modèles de langage — en introduisant le concept de « perroquet stochastique »
-            et le phénomène d'hallucination.`,
+          video: "https://www.canva.com/design/DAHEMnv_S04/PVhKoklqTccTzuWmR2ocnw/watch?embed",
+          videoDesc: `Comprendre comment fonctionne vraiment ChatGPT et pourquoi il peut se tromper.`,
           description: `
             <div class="desc-hero">
               <div class="desc-hero-text">
@@ -181,8 +179,7 @@ const courseData = {
           id: "m1s2",
           title: "Séance 2 — Histoire de l'IA : d'où ça vient ?",
           video: "https://www.youtube.com/embed/9W8H2tGLJng",
-          videoDesc: `Un voyage de 75 ans à travers l'histoire de l'IA : des pionniers des années 1950
-            aux révolutions du deep learning, en passant par les deux « hivers de l'IA ».`,
+          videoDesc: `75 ans d'histoire de l'IA, des pionniers des années 1950 aux révolutions du deep learning.`,
           description: `
             <div class="desc-hero">
               <div class="desc-hero-text">

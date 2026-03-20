@@ -3074,7 +3074,6 @@ img, iframe { max-width: 100%; display: block; }
 
 @media (max-width: 860px) {
   .lp-hero-inner { grid-template-columns: 1fr; gap: 40px; }
-  .lp-hero-visual { order: -1; }
   .lp-hero-title { text-align: center; }
   .lp-hero-subtitle { text-align: center; max-width: 100%; }
   .lp-hero-cta { justify-content: center; }
