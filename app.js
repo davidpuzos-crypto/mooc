@@ -1670,6 +1670,7 @@ function openSignup() {
 document.getElementById('landing-signup-btn').addEventListener('click', openSignup);
 document.getElementById('hero-signup-btn').addEventListener('click', openSignup);
 document.getElementById('footer-signup-btn').addEventListener('click', openSignup);
+document.getElementById('pricing-signup-btn').addEventListener('click', openSignup);
 
 /* --- Onboarding : "J'ai compris, je crée mon compte" → formulaire inscription --- */
 document.getElementById('onboarding-continue-btn').addEventListener('click', () => {
