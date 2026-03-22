@@ -19,6 +19,42 @@
  */
 
 /* ============================================================
+   0. FAVICON — Carré généré par canvas (✦ + dégradé Tisselia)
+      Évite l'écrasement du logo horizontal dans les onglets.
+   ============================================================ */
+(function () {
+  try {
+    const SIZE = 64;
+    const c = document.createElement('canvas');
+    c.width = c.height = SIZE;
+    const ctx = c.getContext('2d');
+
+    /* Fond dégradé avec coins arrondis */
+    const grad = ctx.createLinearGradient(0, 0, SIZE, SIZE);
+    grad.addColorStop(0, '#4db8c8');
+    grad.addColorStop(1, '#f59b8b');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(0, 0, SIZE, SIZE, 14);
+    ctx.fill();
+
+    /* Symbole ✦ centré en blanc */
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 38px serif';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('✦', SIZE / 2, SIZE / 2 + 1);
+
+    /* Injecter le favicon */
+    const link = document.createElement('link');
+    link.rel  = 'icon';
+    link.type = 'image/png';
+    link.href = c.toDataURL();
+    document.head.appendChild(link);
+  } catch (e) { /* silencieux si canvas non supporté */ }
+})();
+
+/* ============================================================
    1. FIREBASE — Configuration & Initialisation
    ============================================================ */
 
