@@ -1722,6 +1722,15 @@ if (lpHamburger && lpNav) {
       lpHamburger.setAttribute('aria-expanded', 'false');
     });
   });
+  /* Fermer le menu si on clique en dehors (corps de page) */
+  document.addEventListener('click', (e) => {
+    if (lpNav.classList.contains('open') &&
+        !lpNav.contains(e.target) &&
+        !lpHamburger.contains(e.target)) {
+      lpNav.classList.remove('open');
+      lpHamburger.setAttribute('aria-expanded', 'false');
+    }
+  });
 }
 
 /* --- Scroll : header shadow + IntersectionObserver reveal --- */
