@@ -54,7 +54,7 @@ const courseData = {
         {
           id: "m1s1",
           title: "Séance 1 — Démystifier l'Intelligence Artificielle",
-          video: "https://www.canva.com/design/DAHEMnv_S04/PVhKoklqTccTzuWmR2ocnw/watch?embed",
+          video: "https://www.youtube.com/embed/sotJrOKclCs?si=fLVlhqeyV6CWmV0i",
           videoDesc: `Comprendre comment fonctionne vraiment ChatGPT et pourquoi il peut se tromper.`,
           description: `
             <div class="desc-hero">
