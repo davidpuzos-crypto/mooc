@@ -148,7 +148,7 @@ const courseData = {
         {
           id: "m1s2",
           title: "Séance 2 — Histoire de l'IA : d'où ça vient ?",
-          video: "https://www.youtube.com/embed/9W8H2tGLJng",
+          video: "https://www.youtube.com/embed/g67E8cEKjH0?si=l-G7LXFyio4peFJI",
           videoDesc: `75 ans d'histoire de l'IA, des pionniers des années 1950 aux révolutions du deep learning.`,
           description: `
             <div class="desc-hero">
@@ -193,14 +193,58 @@ const courseData = {
             questions: [
               {
                 id: "m1s2q1",
-                question: "À qui attribue-t-on la création du terme « Intelligence Artificielle », et lors de quelle conférence fondatrice ?",
+                question: "Question 1 — Le Test de Turing\nQuel est le principe du Test de Turing proposé en 1950 ?",
                 options: [
-                  { id: "a", text: "Alan Turing, lors de la conférence de Cambridge en 1950." },
-                  { id: "b", text: "John McCarthy, lors de la conférence de Dartmouth en 1956." },
-                  { id: "c", text: "Marvin Minsky, lors du symposium du MIT en 1959." },
-                  { id: "d", text: "Norbert Wiener, lors du congrès de cybernétique à New York en 1948." }
+                  { id: "a", text: "Un humain doit résoudre des problèmes de mathématiques aussi vite qu'une machine." },
+                  { id: "b", text: "Si un humain ne parvient pas à distinguer une machine d'un humain lors d'une conversation écrite, la machine peut être considérée comme « pensante »." },
+                  { id: "c", text: "Une machine doit battre un champion humain aux échecs pour prouver son intelligence." },
+                  { id: "d", text: "Une machine doit produire un texte sans aucune faute d'orthographe pour passer le test." }
                 ],
                 answer: "b"
+              },
+              {
+                id: "m1s2q2",
+                question: "Question 2 — Les deux écoles de Dartmouth\nQuelle distinction oppose les deux grandes écoles de pensée nées à Dartmouth en 1956 ?",
+                options: [
+                  { id: "a", text: "L'approche matérielle (hardware) contre l'approche logicielle (software)." },
+                  { id: "b", text: "L'approche occidentale contre l'approche orientale de l'intelligence." },
+                  { id: "c", text: "L'approche symbolique (règles explicites) contre l'approche connexionniste (apprentissage par les données)." },
+                  { id: "d", text: "L'approche déductive contre l'approche inductive en mathématiques." }
+                ],
+                answer: "c"
+              },
+              {
+                id: "m1s2q3",
+                question: "Question 3 — Deep Blue et Kasparov\nPourquoi la victoire de Deep Blue sur Kasparov en 1997 ne signifie-t-elle pas que la machine est « intelligente » ?",
+                options: [
+                  { id: "a", text: "Parce que Kasparov a triché pendant la partie." },
+                  { id: "b", text: "Parce que Deep Blue fonctionnait par force brute de calcul (200 millions de positions/seconde) sans comprendre les échecs, et ne savait faire que cette tâche précise." },
+                  { id: "c", text: "Parce que les règles des échecs avaient été modifiées pour avantager la machine." },
+                  { id: "d", text: "Parce que Deep Blue utilisait en réalité une équipe d'humains cachés pour jouer." }
+                ],
+                answer: "b"
+              },
+              {
+                id: "m1s2q4",
+                question: "Question 4 — AlphaGo vs Deep Blue\nQu'est-ce qui distingue fondamentalement AlphaGo de Deep Blue ?",
+                options: [
+                  { id: "a", text: "AlphaGo avait accès à Internet pendant les parties, ce qui lui donnait un avantage considérable." },
+                  { id: "b", text: "Contrairement à Deep Blue, AlphaGo a appris par imitation puis par renforcement (en jouant des millions de parties contre lui-même), et a découvert des stratégies inédites que les humains n'avaient jamais trouvées." },
+                  { id: "c", text: "AlphaGo utilisait uniquement des règles programmées par des maîtres du Go, sans aucun apprentissage automatique." },
+                  { id: "d", text: "AlphaGo était simplement plus rapide que Deep Blue grâce à des processeurs plus puissants." }
+                ],
+                answer: "b"
+              },
+              {
+                id: "m1s2q5",
+                question: "Question 5 — Le tournant de 2012\nParmi les facteurs suivants, lequel n'est PAS cité comme l'un des trois ingrédients ayant rendu possible le tournant du deep learning en 2012 ?",
+                options: [
+                  { id: "a", text: "La puissance de calcul accrue grâce aux GPU." },
+                  { id: "b", text: "La disponibilité de quantités massives de données grâce à Internet." },
+                  { id: "c", text: "La découverte d'une nouvelle théorie de la conscience artificielle." },
+                  { id: "d", text: "L'amélioration progressive des algorithmes d'apprentissage." }
+                ],
+                answer: "c"
               }
             ]
           }
