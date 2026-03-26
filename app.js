@@ -1026,18 +1026,15 @@ function initQuizInteraction(questions, sessionId, onPassed) {
 
       /* Verrouiller et coloriser */
       block.querySelectorAll('.quiz-option').forEach(el => {
-        el.classList.remove('selected'); /* retire la sélection pour que correct/wrong s'affiche proprement */
+        el.classList.remove('selected');
         el.classList.add('locked');
-        if (el.dataset.oid === q.answer) el.classList.add('correct');
       });
-      const wrongEl = block.querySelector(`.quiz-option[data-oid="${chosen}"]`);
-      if (!isRight && wrongEl) wrongEl.classList.add('wrong');
+      const chosenEl = block.querySelector(`.quiz-option[data-oid="${chosen}"]`);
+      if (chosenEl) chosenEl.classList.add(isRight ? 'correct' : 'wrong');
 
       /* Feedback textuel */
       if (feedback) {
-        feedback.textContent = isRight
-          ? '✅ Bonne réponse !'
-          : "❌ Ce n'est pas la bonne réponse. La bonne réponse est surlignée en vert.";
+        feedback.textContent = isRight ? '✅ Bonne réponse !' : '❌ Mauvaise réponse.';
         feedback.className = `quiz-feedback ${isRight ? 'correct' : 'wrong'}`;
       }
     });
