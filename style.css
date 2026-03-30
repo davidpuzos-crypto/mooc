@@ -1782,6 +1782,21 @@ img, iframe { max-width: 100%; display: block; }
 }
 .admin-quiz-none { color: var(--text-muted); font-size: 0.85rem; }
 
+/* Bouton suppression admin */
+.admin-delete-cell { text-align: center; vertical-align: middle; }
+.admin-delete-btn {
+  background: none;
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 6px;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px 8px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.admin-delete-btn:hover { background: rgba(239,68,68,0.08); border-color: #ef4444; }
+.admin-delete-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
 /* Responsive admin */
 @media (max-width: 900px) {
   .admin-panel { padding: 24px 20px 40px; }
