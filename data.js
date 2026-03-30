@@ -287,7 +287,14 @@ const courseData = {
               </ul>
             </div>
           `,
-          resources: [],
+          resources: [
+            {
+              label: "Support de présentation — Les grandes familles de l'IA",
+              url: "https://tisselia.com/wp-content/uploads/2026/03/Les-grandes-familles-de-lIA.pdf",
+              icon: "📄",
+              recap: true
+            }
+          ],
           evaluation: {
             type: "qcm",
             questions: [
