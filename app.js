@@ -1421,6 +1421,7 @@ function renderUsersTable(users) {
           <th>Accès (jusqu'à)</th>
           <th>Progression</th>
           <th>Score quiz</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>`;
@@ -1475,6 +1476,10 @@ function renderUsersTable(users) {
                <span class="admin-quiz-count">${quizCount} quiz tenté${quizCount > 1 ? 's' : ''}</span>`
             : '<span class="admin-quiz-none">—</span>'}
         </td>
+        <td class="admin-delete-cell">
+          <button class="admin-delete-btn" data-uid="${user.id}" data-email="${user.email}"
+            title="Supprimer ce compte">🗑️</button>
+        </td>
       </tr>`;
   });
 
@@ -1509,6 +1514,23 @@ function renderUsersTable(users) {
         /* Le onSnapshot de l'élève mettra à jour sa sidebar en temps réel */
       } catch (err) {
         console.error('Erreur mise à jour maxSessionUnlocked :', err);
+      }
+    });
+  });
+
+  /* Supprimer un compte */
+  usersTableWrapper.querySelectorAll('.admin-delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const uid   = btn.dataset.uid;
+      const email = btn.dataset.email;
+      if (!confirm(`Supprimer le compte de ${email} ?\n\nCette action est irréversible.`)) return;
+      btn.disabled = true;
+      try {
+        await db.collection('users').doc(uid).delete();
+        /* Le onSnapshot met à jour le tableau automatiquement */
+      } catch (err) {
+        console.error('Erreur suppression :', err);
+        btn.disabled = false;
       }
     });
   });
