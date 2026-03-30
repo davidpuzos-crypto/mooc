@@ -273,7 +273,7 @@ const courseData = {
                 famille fait vraiment, et sur ce qu'elle ne fait pas, notamment la nuance essentielle que
                 l'IA générative recombine sans véritablement créer au sens humain.</p>
               </div>
-              <img src="https://tisselia.com/wp-content/uploads/2026/03/Seance-3.png"
+              <img src="https://tisselia.com/wp-content/uploads/2026/03/Familles-de-lIA.png"
                 alt="Illustration — Les grandes familles de l'IA"
                 class="desc-hero-img" />
             </div>
