@@ -250,14 +250,104 @@ const courseData = {
           }
         },
 
-        /* ------ Séance 3 ------ */
+        /* ------ Séance 3 — Les grandes familles de l'IA (5 QCM) ------ */
         {
           id: "m1s3",
-          title: "Séance 3 — Comprendre le fonctionnement de l'Intelligence Artificielle",
-          video: null,
-          intro: null,
+          title: "Séance 3 — Les grandes familles de l'IA",
+          video: "https://www.youtube.com/embed/DNXGQW8OxEA?si=q6od3zIaZ7wReZSD",
+          videoDesc: `Comprendre comment les différentes formes d'IA s'emboîtent et à quoi elles servent concrètement.`,
+          description: `
+            <div class="desc-hero">
+              <div class="desc-hero-text">
+                <p>L'Intelligence Artificielle est souvent perçue comme un bloc homogène, alors qu'elle
+                recouvre des réalités très différentes. Cette séance vous donne une <strong>carte mentale
+                claire</strong> du paysage de l'IA, organisée autour de deux axes complémentaires.</p>
+                <p>Le premier axe est <strong>technique</strong> : comprendre comment les différentes formes
+                d'IA s'emboîtent les unes dans les autres, à travers la métaphore des poupées russes.
+                De l'IA classique basée sur des règles, au Machine Learning qui apprend par l'exemple,
+                au Deep Learning qui empile des couches de neurones artificiels, jusqu'à l'IA générative.
+                Chaque niveau est plus puissant mais aussi plus exigeant en données et en calcul.</p>
+                <p>Le second axe est <strong>pratique</strong> : distinguer les trois grandes familles
+                d'usage — <em>reconnaissance</em>, <em>prédiction</em>, <em>génération</em> — à travers
+                des exemples concrets tirés du quotidien professionnel. L'accent est mis sur ce que chaque
+                famille fait vraiment, et sur ce qu'elle ne fait pas, notamment la nuance essentielle que
+                l'IA générative recombine sans véritablement créer au sens humain.</p>
+              </div>
+              <img src="https://tisselia.com/wp-content/uploads/2026/03/Seance-3.png"
+                alt="Illustration — Les grandes familles de l'IA"
+                class="desc-hero-img" />
+            </div>
+            <div class="session-objectives">
+              <p class="objectives-title">Objectifs de la séance</p>
+              <ul>
+                <li>Distinguer IA classique, Machine Learning, Deep Learning et IA générative sans les confondre</li>
+                <li>Identifier les trois méthodes d'apprentissage du Machine Learning</li>
+                <li>Différencier les trois familles d'IA selon leurs usages (reconnaissance, prédiction, génération)</li>
+                <li>Porter un regard critique sur la notion de « création » attribuée à l'IA générative</li>
+              </ul>
+            </div>
+          `,
           resources: [],
-          evaluation: null
+          evaluation: {
+            type: "qcm",
+            questions: [
+              {
+                id: "m1s3q1",
+                question: "Parmi ces affirmations, laquelle est correcte ?",
+                options: [
+                  { id: "a", text: "Tout Machine Learning est du Deep Learning." },
+                  { id: "b", text: "Toute IA générative repose sur du Deep Learning." },
+                  { id: "c", text: "Tout Deep Learning est de l'IA générative." },
+                  { id: "d", text: "L'IA classique est une forme de Machine Learning." }
+                ],
+                answer: "b"
+              },
+              {
+                id: "m1s3q2",
+                question: "Dans l'apprentissage supervisé, que fournit-on à la machine ?",
+                options: [
+                  { id: "a", text: "Des données sans étiquettes pour qu'elle trouve des groupes seule." },
+                  { id: "b", text: "Un système de récompenses et de pénalités." },
+                  { id: "c", text: "Des exemples étiquetés associant une donnée à une réponse attendue." },
+                  { id: "d", text: "Un ensemble de règles écrites par un humain." }
+                ],
+                answer: "c"
+              },
+              {
+                id: "m1s3q3",
+                question: "Pourquoi dit-on que le Deep Learning est « profond » ?",
+                options: [
+                  { id: "a", text: "Parce qu'il analyse des données très complexes." },
+                  { id: "b", text: "Parce qu'il utilise beaucoup de couches de neurones empilées successivement." },
+                  { id: "c", text: "Parce qu'il nécessite beaucoup de temps d'entraînement." },
+                  { id: "d", text: "Parce qu'il imite fidèlement le cerveau humain." }
+                ],
+                answer: "b"
+              },
+              {
+                id: "m1s3q4",
+                question: "Karim utilise un outil qui analyse la météo, les vacances scolaires et les matchs de foot pour prévoir le nombre de couverts de son restaurant. De quel type d'IA s'agit-il ?",
+                options: [
+                  { id: "a", text: "IA de reconnaissance." },
+                  { id: "b", text: "IA générative." },
+                  { id: "c", text: "IA classique à base de règles." },
+                  { id: "d", text: "IA prédictive." }
+                ],
+                answer: "d"
+              },
+              {
+                id: "m1s3q5",
+                question: "Qu'est-ce qui distingue fondamentalement l'IA générative des deux autres familles ?",
+                options: [
+                  { id: "a", text: "Elle fonctionne sans données d'entraînement." },
+                  { id: "b", text: "Elle produit du contenu nouveau à partir de recombinaisons de ce qu'elle a ingéré." },
+                  { id: "c", text: "Elle crée de manière consciente comme un humain." },
+                  { id: "d", text: "Elle est la seule à utiliser du Deep Learning." }
+                ],
+                answer: "b"
+              }
+            ]
+          }
         },
 
         /* ------ Séance 4 ------ */
