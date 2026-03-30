@@ -353,17 +353,7 @@ const courseData = {
         /* ------ Séance 4 ------ */
         {
           id: "m1s4",
-          title: "Séance 4 — Panorama des grands outils IA",
-          video: null,
-          intro: null,
-          resources: [],
-          evaluation: null
-        },
-
-        /* ------ Séance 5 ------ */
-        {
-          id: "m1s5",
-          title: "Séance 5 — Prompt Engineering : parler à l'IA efficacement",
+          title: "Séance 4 — Prompt Engineering : parler à l'IA efficacement",
           video: null,
           intro: null,
           resources: [],
