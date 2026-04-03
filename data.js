@@ -357,14 +357,57 @@ const courseData = {
           }
         },
 
-        /* ------ Séance 4 ------ */
+        /* ------ Séance 4 — Comprendre les modèles d'IA pour mieux leur parler (email) ------ */
         {
           id: "m1s4",
-          title: "Séance 4 — Prompt Engineering : parler à l'IA efficacement",
-          video: null,
-          intro: null,
+          title: "Séance 4 — Comprendre les modèles d'IA pour mieux leur parler",
+          video: "https://www.youtube.com/embed/lSDvAkdUt24?si=rBsLiqeNDfhjF7fp",
+          videoDesc: `Ouvrir le capot des LLM pour comprendre pourquoi un bon prompt change tout.`,
+          description: `
+            <div class="desc-hero">
+              <div class="desc-hero-text">
+                <p>Après avoir exploré l'histoire de l'IA et cartographié ses grandes familles, il est
+                temps de comprendre comment ces modèles fonctionnent vraiment de l'intérieur — pas pour
+                devenir ingénieurs, mais pour une raison très concrète : <strong>celui qui comprend comment
+                l'outil pense est infiniment plus efficace pour lui parler</strong>.</p>
+                <p>On découvre ce qu'est vraiment un LLM, comment il prédit les mots un par un, pourquoi
+                il peut produire des réponses brillantes et des erreurs grossières dans la même conversation.
+                On explore la notion de <strong>token</strong>, de <strong>fenêtre de contexte</strong>,
+                de <strong>température</strong>, et on comprend pourquoi l'IA ne cherche pas la vérité
+                mais la vraisemblance.</p>
+                <p>On voit enfin comment transformer cette compréhension en compétence pratique :
+                <strong>l'art du prompt</strong>, avec ses cinq niveaux — rôle, contexte, format,
+                exemples, itération.</p>
+              </div>
+              <img src="https://tisselia.com/wp-content/uploads/2026/03/Seance-4.png"
+                alt="Illustration — Comprendre les modèles d'IA pour mieux leur parler"
+                class="desc-hero-img" />
+            </div>
+            <div class="session-objectives">
+              <p class="objectives-title">Objectifs de la séance</p>
+              <ul>
+                <li>Expliquer avec ses mots ce que fait un LLM et pourquoi un prompt vague produit une réponse générique</li>
+                <li>Définir les notions de token, fenêtre de contexte, température et hallucination</li>
+                <li>Comprendre pourquoi les mots choisis dans un prompt ont un poids sémantique réel</li>
+                <li>Identifier les risques liés aux hallucinations et appliquer la règle de vérification</li>
+                <li>Construire un prompt structuré en cinq niveaux : rôle, contexte, format, exemples, itération</li>
+                <li>Analyser une réponse insatisfaisante pour identifier ce que le prompt n'a pas dit</li>
+              </ul>
+            </div>
+          `,
           resources: [],
-          evaluation: null
+          evaluation: {
+            type: "email",
+            instructions: `
+              <p><strong>Exercice — Construire et améliorer un prompt</strong></p>
+              <p>Choisissez un domaine que vous maîtrisez parfaitement : votre métier, une compétence spécifique, une passion.</p>
+              <p><strong>Étape 1</strong> — Ouvrez Gemini et rédigez un prompt minimal sur ce sujet, en une seule phrase, sans contexte ni rôle. Lisez attentivement la réponse obtenue.</p>
+              <p><strong>Étape 2</strong> — Posez-vous trois questions : qu'est-ce qui est juste dans cette réponse ? qu'est-ce qui sonne générique ou creux ? qu'est-ce qui manque selon vous ?</p>
+              <p><strong>Étape 3</strong> — Ouvrez une nouvelle conversation dans Gemini et réécrivez votre prompt en appliquant les cinq niveaux vus en séance : rôle, contexte, format, contraintes négatives, et un exemple si possible. Lisez la nouvelle réponse.</p>
+              <p><strong>Étape 4</strong> — Comparez mentalement les deux réponses. Est-ce que vous voyez la différence ? Est-ce que vous comprenez pourquoi elle s'est produite ?</p>
+              <p><em>Cet exercice n'a pas de bonne ou mauvaise réponse. Ce qui compte, c'est que vous ressentiez concrètement l'impact d'un prompt bien construit sur la qualité de ce que Gemini vous retourne.</em></p>
+            `
+          }
         }
       ]
     },
