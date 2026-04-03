@@ -826,7 +826,7 @@ function buildLessonHTML(module, session) {
   } else if (ev.type === 'qcm') {
     html += buildQcmHTML(ev.questions, savedScore);
   } else if (ev.type === 'email') {
-    html += buildEmailEvalHTML();
+    html += buildEmailEvalHTML(ev);
   }
 
   /* Séparateur + bouton de complétion (uniquement dans l'onglet Évaluation) */
@@ -886,8 +886,22 @@ function buildQcmHTML(questions, savedScore) {
   return html;
 }
 
-/** HTML pour une évaluation de type email. */
-function buildEmailEvalHTML() {
+/** HTML pour une évaluation de type email (ou exercice pratique). */
+function buildEmailEvalHTML(ev) {
+  /* Si des instructions personnalisées sont fournies, afficher l'exercice */
+  if (ev && ev.instructions) {
+    return `
+      <div class="email-eval">
+        <div class="email-eval-instructions">${ev.instructions}</div>
+        <label class="email-checkbox-wrapper">
+          <input type="checkbox" id="confirm-checkbox" />
+          <span class="email-checkbox-label">
+            Je confirme avoir réalisé l'exercice.
+          </span>
+        </label>
+      </div>`;
+  }
+  /* Sinon : évaluation par envoi d'email (comportement par défaut) */
   return `
     <div class="email-eval">
       <p class="email-eval-title">📧 Envoi de votre travail par e-mail</p>

@@ -379,7 +379,7 @@ const courseData = {
                 <strong>l'art du prompt</strong>, avec ses cinq niveaux — rôle, contexte, format,
                 exemples, itération.</p>
               </div>
-              <img src="https://tisselia.com/wp-content/uploads/2026/03/Seance-4.png"
+              <img src="https://tisselia.com/wp-content/uploads/2026/04/Prompt.png"
                 alt="Illustration — Comprendre les modèles d'IA pour mieux leur parler"
                 class="desc-hero-img" />
             </div>
@@ -395,7 +395,14 @@ const courseData = {
               </ul>
             </div>
           `,
-          resources: [],
+          resources: [
+            {
+              label: "Présentation détaillée — Comprendre les modèles d'IA pour mieux leur parler",
+              url: "https://tisselia.com/wp-content/uploads/2026/04/Seance-2.pptx.pdf",
+              icon: "📄",
+              recap: true
+            }
+          ],
           evaluation: {
             type: "email",
             instructions: `
