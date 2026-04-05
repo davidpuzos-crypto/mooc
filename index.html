@@ -1,829 +1,141 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tisselia — Formation IA & Cybersécurité</title>
-
-  <!-- ══ Favicon ══ -->
-  <!-- icône carrée générée dynamiquement par app.js (canvas ✦ + dégradé Tisselia) -->
-  <link rel="apple-touch-icon" href="https://tisselia.com/wp-content/uploads/2025/07/cropped-path3-2.png" />
-
-  <!-- ══ SEO ══ -->
-  <meta name="description" content="Formation en ligne Intelligence Artificielle & Cybersécurité — 40 heures, 4 modules, 100% à votre rythme. Maîtrisez ChatGPT, Midjourney et les outils IA pour booster votre activité professionnelle." />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://tisselia.com/" />
-
-  <!-- ══ Open Graph (partage réseaux sociaux) ══ -->
-  <meta property="og:type"        content="website" />
-  <meta property="og:url"         content="https://tisselia.com/" />
-  <meta property="og:site_name"   content="Tisselia" />
-  <meta property="og:locale"      content="fr_FR" />
-  <meta property="og:title"       content="Tisselia — Formation Intelligence Artificielle & Cybersécurité" />
-  <meta property="og:description" content="Maîtrisez l'IA et la cybersécurité en 40 heures 100% en ligne. Une formation concrète pensée pour les entrepreneurs et les professionnels." />
-  <meta property="og:image"       content="https://tisselia.com/wp-content/uploads/2025/07/cropped-path3-2.png" />
-
-  <!-- ══ Twitter / X Card ══ -->
-  <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:title"       content="Tisselia — Formation IA & Cybersécurité" />
-  <meta name="twitter:description" content="Maîtrisez l'IA et la cybersécurité en 40 heures 100% en ligne. Une formation concrète pensée pour les entrepreneurs et les professionnels." />
-  <meta name="twitter:image"       content="https://tisselia.com/wp-content/uploads/2025/07/cropped-path3-2.png" />
-
-  <!-- ══ Content Security Policy ══ -->
-  <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self';
-    script-src  'self'
-                https://www.gstatic.com
-                https://apis.google.com
-                https://cdn.jsdelivr.net
-                https://cdnjs.cloudflare.com;
-    style-src   'self' 'unsafe-inline'
-                https://fonts.googleapis.com
-                https://cdnjs.cloudflare.com;
-    font-src    'self'
-                https://fonts.gstatic.com
-                https://cdnjs.cloudflare.com;
-    img-src     'self' data:
-                https://tisselia.com
-                https://*.googleusercontent.com;
-    frame-src   https://www.youtube.com
-                https://www.canva.com
-                https://accounts.google.com
-                https://*.firebaseapp.com;
-    connect-src 'self'
-                https://*.googleapis.com
-                https://apis.google.com
-                https://*.firebaseio.com
-                wss://*.firebaseio.com
-                https://*.firebaseapp.com;
-    media-src   https://tisselia.com;
-    object-src  'none';
-    base-uri    'self';
-  " />
-
-  <!-- Google Fonts : Poppins -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-
-  <!-- Font Awesome (icônes) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- Canvas Confetti (gamification) -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-  <!-- Firebase SDKs — mode compat -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Évaluation Candidats — Soft Skills</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        accent: '#8b5cf6',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .skill-btn { transition: all 0.2s ease; }
+        .skill-btn:active { transform: scale(0.95); }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .badge-count {
+            min-width: 1.5rem;
+            transition: transform 0.15s ease;
+        }
+        .badge-count.bump {
+            transform: scale(1.3);
+        }
+    </style>
 </head>
-<body>
+<body class="bg-gray-50 min-h-screen">
 
-  <!-- ======================================================
-       AUTH OVERLAY — modal sur la landing page ou la plateforme
-  ====================================================== -->
-  <div id="auth-overlay" class="auth-overlay hidden">
-    <div class="auth-card">
-
-      <!-- Bouton fermer (retour à la landing page) -->
-      <button class="auth-close-btn" id="auth-close-btn" aria-label="Fermer">✕</button>
-
-      <!-- Logo -->
-      <div class="auth-logo">
-        <span class="auth-logo-icon">✦</span>
-        <span class="auth-logo-text">Tisselia</span>
-      </div>
-
-      <!-- ══ VUE ONBOARDING : Comment ça marche ? (Step 1) ══ -->
-      <div id="auth-onboarding-view" class="hidden">
-
-        <h2 class="auth-title">Comment ça marche ?</h2>
-        <p class="auth-subtitle">Voici les 3 étapes pour démarrer votre formation.</p>
-
-        <div class="onboarding-steps">
-          <div class="onboarding-step">
-            <div class="step-num">1</div>
-            <div class="step-content">
-              <p class="step-title">Créez votre compte gratuitement</p>
-              <p class="step-text">Remplissez le formulaire d'inscription — aucun paiement requis à cette étape.</p>
-            </div>
-          </div>
-          <div class="onboarding-step">
-            <div class="step-num">2</div>
-            <div class="step-content">
-              <p class="step-title">Nous vous recontactons</p>
-              <p class="step-text">Vous recevrez un email avec les modalités d'inscription et la procédure de paiement.</p>
-            </div>
-          </div>
-          <div class="onboarding-step">
-            <div class="step-num">3</div>
-            <div class="step-content">
-              <p class="step-title">Votre accès est activé</p>
-              <p class="step-text">Dès validation de votre dossier, vous démarrez la formation immédiatement.</p>
-            </div>
-          </div>
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
+        <div class="max-w-4xl mx-auto px-4 py-6">
+            <h1 class="text-3xl font-bold tracking-tight">Recrutement — Soft Skills</h1>
+            <p class="mt-1 text-indigo-200 text-sm">Evaluation des savoir-etre par l'observation en situation</p>
         </div>
-
-        <button id="onboarding-continue-btn" class="btn-primary auth-submit-btn">
-          J'ai compris, je crée mon compte →
-        </button>
-
-        <p class="auth-toggle-text">
-          <span>Déjà un compte ?</span>
-          <button id="onboarding-signin-btn" class="auth-toggle-btn">Se connecter</button>
-        </p>
-
-      </div><!-- /auth-onboarding-view -->
-
-      <!-- ══ VUE PRINCIPALE : Connexion / Inscription (Step 2) ══ -->
-      <div id="auth-main-view">
-
-        <h2 class="auth-title" id="auth-title">Se connecter</h2>
-        <p class="auth-subtitle" id="auth-subtitle">Accédez à votre espace de formation</p>
-
-        <div id="auth-error" class="auth-error hidden"></div>
-
-        <form id="auth-form" class="auth-form" novalidate>
-          <div class="auth-field">
-            <label for="auth-email">Adresse email</label>
-            <input type="email" id="auth-email" placeholder="vous@example.com"
-              autocomplete="email" required />
-          </div>
-
-          <div class="auth-field">
-            <label for="auth-password">Mot de passe</label>
-            <div class="input-password-wrapper">
-              <input type="password" id="auth-password" placeholder="••••••••"
-                autocomplete="current-password" required />
-              <button type="button" class="eye-toggle-btn" id="toggle-password"
-                aria-label="Afficher/Masquer le mot de passe">
-                <i class="fa-regular fa-eye" id="eye-icon-password"></i>
-              </button>
-            </div>
-          </div>
-
-          <div class="auth-field hidden" id="confirm-password-field">
-            <label for="signup-password-confirm">Confirmez votre mot de passe</label>
-            <div class="input-password-wrapper">
-              <input type="password" id="signup-password-confirm" placeholder="••••••••"
-                autocomplete="new-password" />
-              <button type="button" class="eye-toggle-btn" id="toggle-password-confirm"
-                aria-label="Afficher/Masquer la confirmation">
-                <i class="fa-regular fa-eye" id="eye-icon-confirm"></i>
-              </button>
-            </div>
-          </div>
-
-          <button type="submit" class="btn-primary auth-submit-btn" id="auth-submit-btn">
-            Se connecter
-          </button>
-        </form>
-
-        <div id="forgot-password-wrapper" class="forgot-password-wrapper">
-          <button type="button" id="forgot-password-btn" class="forgot-password-btn">
-            Mot de passe oublié ?
-          </button>
-        </div>
-
-        <div class="auth-divider"><span>ou</span></div>
-
-        <button id="google-signin-btn" class="google-signin-btn" type="button">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
-            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-          </svg>
-          Continuer avec Google
-        </button>
-
-        <p class="auth-toggle-text">
-          <span id="auth-toggle-label">Pas encore de compte ?</span>
-          <button id="auth-toggle-btn" class="auth-toggle-btn">S'inscrire</button>
-        </p>
-
-      </div><!-- /auth-main-view -->
-
-      <!-- ══ VUE RÉINITIALISATION DU MOT DE PASSE ══ -->
-      <div id="auth-reset-view" class="hidden">
-
-        <h2 class="auth-title">Mot de passe oublié</h2>
-        <p class="auth-subtitle">Entrez votre adresse e-mail pour recevoir un lien de réinitialisation.</p>
-
-        <div id="reset-error" class="auth-error hidden"></div>
-        <div id="reset-success" class="auth-success hidden"></div>
-
-        <div class="auth-form">
-          <div class="auth-field">
-            <label for="reset-email">Adresse email</label>
-            <input type="email" id="reset-email" placeholder="vous@example.com" autocomplete="email" />
-          </div>
-          <button id="reset-send-btn" class="btn-primary auth-submit-btn" type="button">
-            Envoyer le lien de réinitialisation
-          </button>
-          <button id="reset-back-btn" class="auth-back-btn" type="button">
-            ← Retour à la connexion
-          </button>
-        </div>
-
-      </div><!-- /auth-reset-view -->
-
-    </div>
-  </div>
-
-  <!-- ======================================================
-       LANDING PAGE — écran par défaut (non connecté)
-  ====================================================== -->
-  <div id="landing-page" class="landing-page">
-
-    <!-- Header sticky -->
-    <header class="lp-header" id="lp-header">
-      <div class="lp-header-inner">
-        <a href="#" class="lp-logo-link" id="lp-logo-link">
-          <img src="https://tisselia.com/wp-content/uploads/2025/07/cropped-path3-2.png"
-            alt="Tisselia" class="lp-logo-img" />
-        </a>
-        <nav class="lp-nav" id="lp-nav">
-          <a href="#pour-qui" class="lp-nav-link">Pour qui ?</a>
-          <a href="#programme" class="lp-nav-link">Programme</a>
-          <a href="#plateforme" class="lp-nav-link">La plateforme</a>
-          <button id="landing-signin-btn" class="lp-btn-secondary">Accès à la plateforme</button>
-          <button id="landing-signup-btn" class="lp-btn-primary">S'inscrire sur la plateforme →</button>
-        </nav>
-        <button id="lp-hamburger" class="lp-hamburger" aria-label="Ouvrir le menu" aria-expanded="false">
-          <span></span><span></span><span></span>
-        </button>
-      </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="lp-hero">
-      <div class="lp-hero-inner">
-        <div class="lp-hero-content reveal">
-          <span class="lp-badge">Formation 100% en ligne</span>
-          <h1 class="lp-hero-title">
-            Maîtrisez <span class="lp-gradient-text">l'Intelligence Artificielle</span>
-            &amp; la Cybersécurité
-          </h1>
-          <p class="lp-hero-subtitle">
-            Boostez votre productivité, automatisez vos tâches et créez des contenus
-            professionnels en toute sécurité. Une formation pensée pour les entrepreneurs
-            et les professionnels qui veulent prendre de l'avance.
-          </p>
-          <div class="lp-hero-cta">
-            <button id="hero-signup-btn" class="lp-btn-primary lp-btn-lg">
-              S'inscrire sur la plateforme →
-            </button>
-            <a href="#programme" class="lp-btn-ghost lp-btn-lg">Voir le programme ↓</a>
-          </div>
-        </div>
+    <main class="max-w-4xl mx-auto px-4 py-8 space-y-8">
 
-        <div class="lp-hero-visual reveal reveal-delay-2">
-          <div class="lp-video-wrap">
-            <div class="lp-player" id="lp-player">
-
-              <video id="lp-video"
-                src="https://tisselia.com/wp-content/uploads/2026/03/Video-dintroduction-a-la-formation-1.mp4"
-                preload="metadata"
-                playsinline>
-              </video>
-
-              <!-- Overlay grande icône play -->
-              <div class="lp-ply-overlay" id="lp-ply-overlay">
-                <div class="lp-ply-overlay-inner">
-                  <div class="lp-ply-btn-wrap">
-                    <div class="lp-ply-ring"></div>
-                    <button class="lp-ply-bigbtn" id="lp-ply-bigbtn" aria-label="Lancer la vidéo de présentation">
-                      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-                    </button>
-                  </div>
-                  <p class="lp-ply-tagline">Regarder la présentation</p>
+        <!-- Section 1 : Inscription candidat -->
+        <section id="section-inscription" class="bg-white rounded-2xl shadow-md p-6 fade-in">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <span class="bg-indigo-100 text-indigo-700 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">1</span>
+                Inscription du candidat
+            </h2>
+            <form id="form-candidat" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="nom" class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                        <input type="text" id="nom" name="nom" required
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                            placeholder="Dupont">
+                    </div>
+                    <div>
+                        <label for="prenom" class="block text-sm font-medium text-gray-700 mb-1">Prenom</label>
+                        <input type="text" id="prenom" name="prenom" required
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                            placeholder="Marie">
+                    </div>
                 </div>
-              </div>
-
-              <!-- Barre de contrôles -->
-              <div class="lp-ply-controls" id="lp-ply-controls">
-
-                <!-- Barre de progression -->
-                <div class="lp-ply-seek" id="lp-ply-seek" aria-label="Progression">
-                  <div class="lp-ply-seek-buf"   id="lp-ply-seek-buf"></div>
-                  <div class="lp-ply-seek-fill"  id="lp-ply-seek-fill"></div>
-                  <div class="lp-ply-seek-thumb" id="lp-ply-seek-thumb"></div>
-                </div>
-
-                <!-- Boutons -->
-                <div class="lp-ply-row">
-                  <!-- Lecture / Pause -->
-                  <button class="lp-ply-btn" id="lp-ply-pp" aria-label="Lecture / Pause">
-                    <svg class="lp-icon-play"  viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                    <svg class="lp-icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                  </button>
-                  <!-- Temps -->
-                  <span class="lp-ply-time" id="lp-ply-time">0:00 / 0:00</span>
-                  <div class="lp-ply-spacer"></div>
-                  <!-- Mute -->
-                  <button class="lp-ply-btn" id="lp-ply-mute" aria-label="Muet">
-                    <svg class="lp-icon-vol"   viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                    <svg class="lp-icon-muted" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
-                  </button>
-                  <!-- Volume -->
-                  <input class="lp-ply-vol" id="lp-ply-vol" type="range" min="0" max="1" step="0.02" value="1" aria-label="Volume" />
-                  <!-- Plein écran -->
-                  <button class="lp-ply-btn" id="lp-ply-fs" aria-label="Plein écran">
-                    <svg class="lp-icon-fs"  viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-                    <svg class="lp-icon-efs" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
-                  </button>
-                </div>
-
-              </div><!-- /lp-ply-controls -->
-            </div><!-- /lp-player -->
-          </div><!-- /lp-video-wrap -->
-        </div>
-      </div>
-
-      <div class="lp-blob lp-blob-1" aria-hidden="true"></div>
-      <div class="lp-blob lp-blob-2" aria-hidden="true"></div>
-    </section>
-
-    <!-- Barre de statistiques -->
-    <div class="lp-stats-bar">
-      <div class="lp-stats-inner">
-        <div class="lp-stat-item">
-          <span class="lp-stat-value">40h</span>
-          <span class="lp-stat-label">de formation</span>
-        </div>
-        <div class="lp-stat-sep" aria-hidden="true"></div>
-        <div class="lp-stat-item">
-          <span class="lp-stat-value">4</span>
-          <span class="lp-stat-label">modules thématiques</span>
-        </div>
-        <div class="lp-stat-sep" aria-hidden="true"></div>
-        <div class="lp-stat-item">
-          <span class="lp-stat-value">100%</span>
-          <span class="lp-stat-label">en ligne &amp; à votre rythme</span>
-        </div>
-        <div class="lp-stat-sep" aria-hidden="true"></div>
-        <div class="lp-stat-item">
-          <span class="lp-stat-value">✦</span>
-          <span class="lp-stat-label">attestation de formation</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section : Le Programme -->
-    <section id="programme" class="lp-section lp-section-alt">
-      <div class="lp-section-inner">
-        <div class="lp-section-header reveal">
-          <span class="lp-section-badge">Le Programme</span>
-          <h2 class="lp-section-title">4 modules pour maîtriser l'IA de A à Z</h2>
-          <p class="lp-section-subtitle">Un parcours progressif de 40 heures réparties en 4 modules, du débutant au projet concret.</p>
-        </div>
-        <div class="lp-modules-grid">
-          <div class="lp-module-card reveal reveal-delay-1">
-            <div class="lp-module-num">01</div>
-            <div class="lp-module-body">
-              <h3 class="lp-module-title">S'initier à l'IA : comprendre les LLM et être créatif</h3>
-              <p class="lp-module-desc">Comprenez le fonctionnement des grands modèles de langage (LLM) : architecture, entraînement, limites. Découvrez ChatGPT et Gemini, et apprenez à rédiger des prompts efficaces pour générer du contenu de qualité professionnelle.</p>
-              <div class="lp-module-tags">
-                <span class="lp-tag">ChatGPT</span>
-                <span class="lp-tag">Gemini</span>
-                <span class="lp-tag">LLM</span>
-                <span class="lp-tag">Prompting</span>
-              </div>
-            </div>
-          </div>
-          <div class="lp-module-card reveal reveal-delay-2">
-            <div class="lp-module-num">02</div>
-            <div class="lp-module-body">
-              <h3 class="lp-module-title">Générer et éditer des contenus visuels, vidéos et audio</h3>
-              <p class="lp-module-desc">Créez des images et illustrations percutantes avec Nano Banana et DALL-E, générez des vidéos et des contenus audio professionnels grâce aux outils d'IA générative de dernière génération.</p>
-              <div class="lp-module-tags">
-                <span class="lp-tag">Nano Banana</span>
-                <span class="lp-tag">DALL-E</span>
-                <span class="lp-tag">Génération vidéo</span>
-                <span class="lp-tag">Audio IA</span>
-              </div>
-            </div>
-          </div>
-          <div class="lp-module-card reveal reveal-delay-3">
-            <div class="lp-module-num">03</div>
-            <div class="lp-module-body">
-              <h3 class="lp-module-title">Rédiger et traduire avec l'IA</h3>
-              <p class="lp-module-desc">Du content marketing à la rédaction de livres, maîtrisez les outils d'IA pour produire des textes percutants, traduire avec précision et structurer n'importe quel projet éditorial.</p>
-              <div class="lp-module-tags">
-                <span class="lp-tag">Claude</span>
-                <span class="lp-tag">DeepL</span>
-                <span class="lp-tag">Content marketing</span>
-                <span class="lp-tag">Rédaction longue</span>
-              </div>
-            </div>
-          </div>
-          <div class="lp-module-card reveal reveal-delay-4">
-            <div class="lp-module-num">04</div>
-            <div class="lp-module-body">
-              <h3 class="lp-module-title">Entreprendre et automatiser ses tâches</h3>
-              <p class="lp-module-desc">Utilisez l'IA pour gérer vos tâches administratives et automatisez vos workflows avec Claude Code et Make. Construisez des systèmes productifs directement opérationnels, sans expertise technique requise.</p>
-              <div class="lp-module-tags">
-                <span class="lp-tag">Claude Code</span>
-                <span class="lp-tag">Make</span>
-                <span class="lp-tag">Administration IA</span>
-                <span class="lp-tag">Automatisation</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section : La Plateforme -->
-    <section id="plateforme" class="lp-section">
-      <div class="lp-section-inner">
-        <div class="lp-section-header reveal">
-          <span class="lp-section-badge">La plateforme</span>
-          <h2 class="lp-section-title">Une expérience d'apprentissage pensée pour vous</h2>
-          <p class="lp-section-subtitle">Tous les cours sont conçus et animés par des <strong>professionnels diplômés de niveau doctorat</strong>, experts en Intelligence Artificielle et en Cybersécurité.</p>
-        </div>
-        <div class="lp-cards-grid lp-cards-3">
-          <div class="lp-pillar-card reveal reveal-delay-1">
-            <div class="lp-pillar-icon-wrap">
-              <span class="lp-pillar-icon">🎬</span>
-            </div>
-            <h3 class="lp-pillar-title">Vidéos pédagogiques</h3>
-            <p class="lp-pillar-text">Chaque séance s'ouvre sur une vidéo claire et structurée, accessible à tout moment depuis votre espace personnel.</p>
-          </div>
-          <div class="lp-pillar-card reveal reveal-delay-2">
-            <div class="lp-pillar-icon-wrap">
-              <span class="lp-pillar-icon">📄</span>
-            </div>
-            <h3 class="lp-pillar-title">Supports PDF téléchargeables</h3>
-            <p class="lp-pillar-text">Retrouvez les fiches récapitulatives et les supports de cours en PDF pour réviser et progresser à votre rythme.</p>
-          </div>
-          <div class="lp-pillar-card reveal reveal-delay-3">
-            <div class="lp-pillar-icon-wrap">
-              <span class="lp-pillar-icon">✅</span>
-            </div>
-            <h3 class="lp-pillar-title">Quiz de validation</h3>
-            <p class="lp-pillar-text">Un quiz interactif clôture chaque séance. Obtenez 75 % pour valider et débloquer la séance suivante.</p>
-          </div>
-          <div class="lp-pillar-card reveal reveal-delay-1">
-            <div class="lp-pillar-icon-wrap">
-              <span class="lp-pillar-icon">📈</span>
-            </div>
-            <h3 class="lp-pillar-title">Progression sauvegardée</h3>
-            <p class="lp-pillar-text">Vos scores et votre avancement sont enregistrés en temps réel. Reprenez exactement où vous en étiez, sur n'importe quel appareil.</p>
-          </div>
-          <div class="lp-pillar-card reveal reveal-delay-2">
-            <div class="lp-pillar-icon-wrap">
-              <span class="lp-pillar-icon">🎓</span>
-            </div>
-            <h3 class="lp-pillar-title">Attestation de formation</h3>
-            <p class="lp-pillar-text">À l'issue du parcours, vous recevez une attestation officielle certifiant la validation de l'ensemble du programme.</p>
-          </div>
-          <div class="lp-pillar-card reveal reveal-delay-3">
-            <div class="lp-pillar-icon-wrap">
-              <span class="lp-pillar-icon">🔬</span>
-            </div>
-            <h3 class="lp-pillar-title">Expertise de niveau doctorat</h3>
-            <p class="lp-pillar-text">Tous les contenus sont élaborés par des entrepreneurs &amp; experts titulaires d'un doctorat, garantissant rigueur scientifique et pertinence opérationnelle.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section : Pour Qui ? -->
-    <section id="pour-qui" class="lp-section lp-section-alt">
-      <div class="lp-section-inner">
-        <div class="lp-section-header reveal">
-          <span class="lp-section-badge">Pour qui ?</span>
-          <h2 class="lp-section-title">Une formation taillée pour votre réalité</h2>
-          <p class="lp-section-subtitle">Que vous soyez entrepreneur, indépendant ou en transition, cette formation s'adapte à votre quotidien et vos objectifs.</p>
-        </div>
-        <div class="lp-cards-grid lp-cards-4">
-          <div class="lp-card reveal reveal-delay-1">
-            <div class="lp-card-icon">🚀</div>
-            <h3 class="lp-card-title">Auto-entrepreneurs</h3>
-            <p class="lp-card-text">Automatisez vos tâches répétitives, créez vos visuels et textes marketing en quelques minutes grâce à l'IA.</p>
-          </div>
-          <div class="lp-card reveal reveal-delay-2">
-            <div class="lp-card-icon">💼</div>
-            <h3 class="lp-card-title">Indépendants</h3>
-            <p class="lp-card-text">Optimisez votre productivité, rédigez vos propositions commerciales et gérez votre communication avec l'IA.</p>
-          </div>
-          <div class="lp-card reveal reveal-delay-3">
-            <div class="lp-card-icon">💡</div>
-            <h3 class="lp-card-title">Porteurs de projets</h3>
-            <p class="lp-card-text">Donnez vie à vos idées : prototypez, pitchez et construisez votre offre avec les meilleurs outils IA du moment.</p>
-          </div>
-          <div class="lp-card reveal reveal-delay-4">
-            <div class="lp-card-icon">🔄</div>
-            <h3 class="lp-card-title">En reconversion</h3>
-            <p class="lp-card-text">Acquérez des compétences digitales concrètes et directement valorisables pour réussir votre transition.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section : Offre de lancement -->
-    <section class="lp-section lp-section-alt" id="offre">
-      <div class="lp-section-inner">
-        <div class="lp-section-header reveal">
-          <span class="lp-section-badge">Offre Bêta-Testeurs</span>
-          <h2 class="lp-section-title">Rejoignez la formation au tarif de lancement</h2>
-          <p class="lp-section-subtitle">La plateforme est en phase de lancement et de mise en place. Profitez d'un accès privilégié à un tarif exceptionnel, valable jusqu'en juin 2026.</p>
-        </div>
-
-        <div class="lp-pricing-card reveal">
-          <div class="lp-pricing-badge">⚡ Offre limitée — Bêta-testeurs</div>
-
-          <div class="lp-pricing-main">
-            <div class="lp-pricing-left">
-              <p class="lp-pricing-label">Accès complet à la formation</p>
-              <div class="lp-pricing-amount">
-                <span class="lp-pricing-price">150 €</span>
-                <span class="lp-pricing-period">pour 6 mois d'accès</span>
-              </div>
-              <p class="lp-pricing-note">Tarif bêta-testeur — valable jusqu'au 30 juin 2026</p>
-            </div>
-
-            <div class="lp-pricing-features">
-              <ul>
-                <li><span>✓</span> Accès à l'intégralité des modules et séances</li>
-                <li><span>✓</span> Vidéos, supports PDF et quiz interactifs</li>
-                <li><span>✓</span> Progression sauvegardée en temps réel</li>
-                <li><span>✓</span> Attestation de formation à l'issue du parcours</li>
-                <li><span>✓</span> Accompagnement direct par e-mail</li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="lp-pricing-footer">
-            <button id="pricing-signup-btn" class="lp-btn-primary lp-btn-lg">
-              S'inscrire au tarif bêta →
-            </button>
-            <p class="lp-pricing-disclaimer">
-              La plateforme est actuellement en phase de lancement. Les contenus et fonctionnalités sont déployés progressivement. En tant que bêta-testeur, vous bénéficiez d'un tarif préférentiel en contrepartie de votre participation à cette phase d'ouverture.
-            </p>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- Section CTA Final -->
-    <section class="lp-final-cta">
-      <div class="lp-final-cta-inner reveal">
-        <div class="lp-cta-blob" aria-hidden="true"></div>
-        <span class="lp-section-badge" style="color:#fff;border-color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);">Rejoindre la formation</span>
-        <h2 class="lp-final-cta-title">Prêt à prendre de l'avance ?</h2>
-        <p class="lp-final-cta-subtitle">Inscrivez-vous dès maintenant et transformez l'IA en véritable levier pour votre activité.</p>
-        <button id="footer-signup-btn" class="lp-btn-white lp-btn-lg">
-          S'inscrire sur la plateforme →
-        </button>
-      </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="lp-footer">
-      <div class="lp-footer-inner">
-        <img src="https://tisselia.com/wp-content/uploads/2025/07/cropped-path3-2.png"
-          alt="Tisselia" class="lp-footer-logo" />
-        <p class="lp-footer-text">© 2026 Tisselia — Formation Intelligence Artificielle &amp; Cybersécurité</p>
-        <a href="mailto:davidpuzos@tisselia.com" class="lp-footer-link" rel="noopener noreferrer">Contact</a>
-      </div>
-    </footer>
-
-  </div><!-- /landing-page -->
-
-  <!-- ===== OVERLAY MOBILE (fond sombre quand sidebar ouverte) ===== -->
-  <div id="sidebar-overlay" class="sidebar-overlay"></div>
-
-  <!-- ===== APP WRAPPER (plateforme LMS — affichée uniquement si connecté+approuvé) ===== -->
-  <div id="app-wrapper" class="app-wrapper hidden">
-
-    <!-- ======================================================
-         SIDEBAR GAUCHE
-    ====================================================== -->
-    <aside id="sidebar" class="sidebar">
-
-      <div class="sidebar-header">
-        <div class="logo">
-          <img src="https://tisselia.com/wp-content/uploads/2025/07/cropped-path3-2.png"
-            alt="Tisselia" class="sidebar-logo-img" />
-        </div>
-        <button id="sidebar-close-btn" class="sidebar-close-btn" aria-label="Fermer le menu">✕</button>
-      </div>
-
-      <div class="progress-container hidden" id="progress-container">
-        <div class="progress-label">
-          <span>Progression globale</span>
-          <span id="progress-percent">0%</span>
-        </div>
-        <div class="progress-bar-track">
-          <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
-        </div>
-      </div>
-
-      <div class="sidebar-home-wrapper hidden" id="sidebar-home-wrapper">
-        <button id="home-btn" class="sidebar-home-btn">
-          <span class="home-btn-icon">🏠</span>
-          <span>Accueil</span>
-        </button>
-        <button id="dashboard-btn" class="sidebar-home-btn">
-          <span class="home-btn-icon">📊</span>
-          <span>Tableau de bord</span>
-        </button>
-      </div>
-
-      <nav id="course-nav" class="course-nav hidden" aria-label="Plan de cours"></nav>
-
-      <div class="sidebar-footer hidden" id="sidebar-footer">
-        <div class="user-info">
-          <span class="user-avatar">👤</span>
-          <span id="user-email-display" class="user-email-display"></span>
-        </div>
-        <div class="sidebar-admin-wrapper hidden" id="sidebar-admin-wrapper">
-          <button id="admin-panel-btn" class="sidebar-admin-btn">
-            <span>⚙️</span>
-            <span>Panel Admin</span>
-          </button>
-        </div>
-        <button id="signout-btn" class="signout-btn">Déconnexion</button>
-      </div>
-
-    </aside><!-- /sidebar -->
-
-    <!-- ======================================================
-         ZONE PRINCIPALE
-    ====================================================== -->
-    <main id="main-content" class="main-content">
-
-      <header class="main-header">
-        <button id="hamburger-btn" class="hamburger-btn" aria-label="Ouvrir le menu">
-          <span></span><span></span><span></span>
-        </button>
-        <div class="main-header-title" id="main-header-title">Intelligence Artificielle &amp; Cybersécurité</div>
-      </header>
-
-      <!-- Tableau de bord admin -->
-      <div id="admin-panel" class="admin-panel hidden">
-        <div class="admin-header">
-          <div class="admin-header-text">
-            <h1 class="admin-title">⚙️ Tableau de bord</h1>
-            <p class="admin-subtitle">Gérez les accès et la progression de vos élèves en temps réel.</p>
-          </div>
-          <div id="admin-stats" class="admin-stats"></div>
-        </div>
-        <div id="users-table-wrapper" class="users-table-wrapper">
-          <p class="admin-loading">Chargement des élèves…</p>
-        </div>
-      </div>
-
-      <!-- Écran "inscription en attente" -->
-      <div id="pending-screen" class="pending-screen hidden">
-        <div class="pending-icon">⏳</div>
-        <h2 class="pending-title">Inscription prise en compte !</h2>
-        <p class="pending-text">
-          Vous serez recontacté prochainement par nos services par email avec la procédure
-          de paiement et les modalités d'inscription.<br><br>
-          Votre accès à la plateforme sera activé dès la validation de votre dossier.
-        </p>
-      </div>
-
-      <!-- Zone d'affichage du contenu (status: approved) -->
-      <div id="lesson-view" class="lesson-view">
-
-        <!-- ======================================================
-             PAGE D'ACCUEIL — première page après connexion
-        ====================================================== -->
-        <div id="home-screen" class="home-screen hidden">
-
-          <div class="home-header">
-            <div class="home-header-text">
-              <p id="home-greeting" class="home-greeting">Bienvenue !</p>
-              <p class="home-header-sub">Votre espace de formation Intelligence Artificielle &amp; Cybersécurité.</p>
-            </div>
-            <button id="home-dashboard-cta" class="btn-primary">Mon tableau de bord →</button>
-          </div>
-
-          <div class="home-section">
-            <h2 class="home-section-title">Présentation de la plateforme</h2>
-            <div class="home-video-wrap">
-              <video
-                src="https://tisselia.com/wp-content/uploads/2026/03/Video-dintroduction.mp4"
-                controls playsinline class="home-video">
-              </video>
-            </div>
-          </div>
-
-          <div class="home-section home-howto">
-            <h2 class="home-section-title">Comment ça marche ?</h2>
-            <div class="home-steps">
-              <div class="home-step">
-                <span class="home-step-num">1</span>
                 <div>
-                  <strong>Séances débloquées progressivement</strong>
-                  <p>Votre formateur ouvre les séances au fur et à mesure de votre avancement.</p>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="email" name="email" required
+                        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                        placeholder="marie.dupont@email.com">
                 </div>
-              </div>
-              <div class="home-step">
-                <span class="home-step-num">2</span>
                 <div>
-                  <strong>Vidéo, cours et fiche récap</strong>
-                  <p>Chaque séance contient une vidéo pédagogique et un support PDF téléchargeable.</p>
+                    <label for="lien-16p" class="block text-sm font-medium text-gray-700 mb-1">Lien du resultat 16 Personalities</label>
+                    <input type="url" id="lien-16p" name="lien16p"
+                        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                        placeholder="https://www.16personalities.com/profiles/...">
+                    <p class="text-xs text-gray-400 mt-1">Collez ici le lien de votre profil 16 Personalities</p>
                 </div>
-              </div>
-              <div class="home-step">
-                <span class="home-step-num">3</span>
-                <div>
-                  <strong>Validez le quiz (≥ 75 %)</strong>
-                  <p>Obtenez au moins 75 % au quiz pour valider la séance et débloquer la suivante.</p>
-                </div>
-              </div>
-              <div class="home-step">
-                <span class="home-step-num">4</span>
-                <div>
-                  <strong>Progression sauvegardée</strong>
-                  <p>Vos scores et votre avancement sont enregistrés en temps réel dans votre profil.</p>
-                </div>
-              </div>
+                <button type="submit" id="btn-inscrire"
+                    class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-lg shadow transition">
+                    Inscrire le candidat
+                </button>
+            </form>
+            <div id="msg-inscription" class="mt-4 hidden"></div>
+        </section>
+
+        <!-- Section 2 : Observation -->
+        <section id="section-observation" class="bg-white rounded-2xl shadow-md p-6 fade-in hidden">
+            <h2 class="text-xl font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                <span class="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">2</span>
+                Observation — Session de jeu
+            </h2>
+            <p id="candidat-actif" class="text-sm text-gray-500 mb-6"></p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="grille-competences">
+                <!-- Les boutons seront generes par app.js -->
             </div>
-          </div>
 
-          <!-- Support & communauté -->
-          <div class="dash-support-row">
-            <a href="mailto:contact@tisselia.com?subject=Question%20formation%20IA" class="dash-support-card dash-support-contact">
-              <span class="dash-support-icon">✉️</span>
-              <div class="dash-support-body">
-                <strong>Une question ou besoin d'aide ?</strong>
-                <p>Contactez votre formateur directement par e-mail.</p>
-              </div>
-              <span class="dash-support-arrow">→</span>
-            </a>
-            <a href="https://chat.whatsapp.com/CdAtHPwQks0LWmYxMOizbI" target="_blank" rel="noopener noreferrer" class="dash-support-card dash-support-wa">
-              <span class="dash-support-icon">💬</span>
-              <div class="dash-support-body">
-                <strong>Rejoindre la communauté</strong>
-                <p>Prêt à échanger ? Rejoignez le groupe WhatsApp des participants.</p>
-              </div>
-              <span class="dash-support-arrow">→</span>
-            </a>
-          </div>
-
-          <div class="home-cta">
-            <button id="home-dashboard-cta2" class="btn-primary home-cta-btn">
-              Accéder à mon tableau de bord →
-            </button>
-          </div>
-
-        </div><!-- /home-screen -->
-
-        <!-- Tableau de bord de la plateforme -->
-        <div id="welcome-screen" class="welcome-screen hidden">
-
-          <!-- En-tête -->
-          <div class="dash-header">
-            <div class="dash-header-text">
-              <span class="dash-board-label">Tableau de bord</span>
-              <p id="dash-greeting" class="dash-greeting">Bonjour !</p>
-              <p class="dash-subtitle">Bienvenue sur votre espace de formation — suivez votre progression et accédez à vos cours IA &amp; Cybersécurité.</p>
+            <div class="mt-8 flex flex-col sm:flex-row gap-3">
+                <button id="btn-enregistrer"
+                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg shadow transition">
+                    Enregistrer l'observation
+                </button>
+                <button id="btn-reinitialiser"
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-6 py-3 rounded-lg shadow transition">
+                    Reinitialiser les scores
+                </button>
             </div>
-            <button class="btn-primary dash-resume-btn" id="start-btn">Reprendre la formation →</button>
-          </div>
+            <div id="msg-observation" class="mt-4 hidden"></div>
+        </section>
 
-          <!-- Bannière certificat (affichée si tout est terminé) -->
-          <div id="certificate-banner" class="certificate-banner hidden">
-            <div class="certificate-icon">🏆</div>
-            <div class="certificate-text">
-              <p class="certificate-title">Formation complétée — Félicitations !</p>
-              <p class="certificate-subtitle">Vous avez validé l'intégralité des séances. Contactez votre formateur pour recevoir votre attestation.</p>
-            </div>
-            <a href="mailto:davidpuzos@tisselia.com?subject=Demande%20d%27attestation&body=Bonjour%2C%20j%27ai%20compl%C3%A9t%C3%A9%20toutes%20les%20s%C3%A9ances%20de%20la%20formation%20IA%20%26%20Cybers%C3%A9curit%C3%A9." class="certificate-btn" rel="noopener noreferrer">
-              🎓 Demander mon attestation
-            </a>
-          </div>
-
-          <!-- KPI cards (remplies par JS) -->
-          <div class="dash-kpis" id="dash-kpis"></div>
-
-          <!-- Mes séances (remplies par JS) -->
-          <div class="dash-section">
-            <h2 class="dash-section-title">Mes séances</h2>
-            <div id="dash-sessions" class="dash-sessions"></div>
-          </div>
-
-        </div><!-- /welcome-screen -->
-
-        <div id="lesson-content" class="lesson-content hidden"></div>
-
-      </div><!-- /lesson-view -->
+        <!-- Section 3 : Recapitulatif -->
+        <section id="section-recap" class="bg-white rounded-2xl shadow-md p-6 fade-in hidden">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <span class="bg-green-100 text-green-700 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">3</span>
+                Recapitulatif
+            </h2>
+            <div id="recap-contenu" class="space-y-2 text-sm text-gray-700"></div>
+        </section>
 
     </main>
 
-  </div><!-- /app-wrapper -->
+    <!-- Footer -->
+    <footer class="text-center text-xs text-gray-400 py-6">
+        Application de recrutement par les soft skills &copy; 2026
+    </footer>
 
-  <script src="data.js"></script>
-  <script src="app.js"></script>
+    <!-- Firebase SDK (compat pour script classique) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
+
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
