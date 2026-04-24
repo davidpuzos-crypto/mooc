@@ -757,6 +757,11 @@ function buildLessonHTML(module, session) {
     <div class="tab-panel hidden" id="tab-cours" role="tabpanel">
   `;
 
+  /* Callout introductif (ex: "Avant de commencer, créez un compte…") */
+  if (session.intro) {
+    html += session.intro;
+  }
+
   /* Description courte de la vidéo */
   if (session.videoDesc) {
     html += `<p class="video-caption">${session.videoDesc}</p>`;
