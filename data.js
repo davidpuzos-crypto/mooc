@@ -408,9 +408,9 @@ const courseData = {
             instructions: `
               <p><strong>Exercice — Construire et améliorer un prompt</strong></p>
               <p>Choisissez un domaine que vous maîtrisez parfaitement : votre métier, une compétence spécifique, une passion.</p>
-              <p><strong>Étape 1</strong> — Ouvrez Gemini et rédigez un prompt minimal sur ce sujet, en une seule phrase, sans contexte ni rôle. Lisez attentivement la réponse obtenue.</p>
+              <p><strong>Étape 1</strong> — Ouvrez <a href="http://gemini.google.com/" target="_blank" rel="noopener noreferrer">Gemini</a> (l'assistant IA de Google, que nous utiliserons tout au long de la formation) et rédigez un prompt minimal sur ce sujet, en une seule phrase, sans contexte ni rôle. Lisez attentivement la réponse obtenue.</p>
               <p><strong>Étape 2</strong> — Posez-vous trois questions : qu'est-ce qui est juste dans cette réponse ? qu'est-ce qui sonne générique ou creux ? qu'est-ce qui manque selon vous ?</p>
-              <p><strong>Étape 3</strong> — Ouvrez une nouvelle conversation dans Gemini et réécrivez votre prompt en appliquant les cinq niveaux vus en séance : rôle, contexte, format, contraintes négatives, et un exemple si possible. Lisez la nouvelle réponse.</p>
+              <p><strong>Étape 3</strong> — Ouvrez une nouvelle conversation dans <a href="http://gemini.google.com/" target="_blank" rel="noopener noreferrer">Gemini</a> et réécrivez votre prompt en appliquant les cinq niveaux vus en séance : rôle, contexte, format, contraintes négatives, et un exemple si possible. Lisez la nouvelle réponse.</p>
               <p><strong>Étape 4</strong> — Comparez mentalement les deux réponses. Est-ce que vous voyez la différence ? Est-ce que vous comprenez pourquoi elle s'est produite ?</p>
               <p><em>Cet exercice n'a pas de bonne ou mauvaise réponse. Ce qui compte, c'est que vous ressentiez concrètement l'impact d'un prompt bien construit sur la qualité de ce que Gemini vous retourne.</em></p>
             `
