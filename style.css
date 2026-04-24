@@ -1782,6 +1782,44 @@ img, iframe { max-width: 100%; display: block; }
 }
 .admin-quiz-none { color: var(--text-muted); font-size: 0.85rem; }
 
+/* Callout introductif (avant la vidéo) */
+.session-intro-callout {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: linear-gradient(135deg, rgba(77,184,200,0.08), rgba(245,155,139,0.08));
+  border: 1px solid rgba(77,184,200,0.25);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+.intro-callout-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+.intro-callout-body p { margin: 0 0 6px; font-size: 0.92rem; line-height: 1.55; color: var(--text-primary); }
+.intro-callout-body p:last-child { margin-bottom: 0; }
+.intro-callout-body a { color: var(--cyan); text-decoration: underline; }
+
+/* Exercices d'évaluation */
+.eval-exercise-title { margin: 18px 0 10px; font-size: 1.05rem; color: var(--text-primary); }
+.eval-details { margin: 14px 0; border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; overflow: hidden; }
+.eval-details summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-weight: 500;
+  font-size: 0.92rem;
+  background: rgba(0,0,0,0.02);
+}
+.eval-details summary:hover { background: rgba(0,0,0,0.04); }
+.eval-model-box {
+  padding: 16px;
+  background: rgba(77,184,200,0.04);
+  border-top: 1px solid rgba(0,0,0,0.06);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.eval-model-box p { margin: 0 0 10px; }
+.eval-model-box p:last-child { margin-bottom: 0; }
+
 /* Bouton suppression admin */
 .admin-delete-cell { text-align: center; vertical-align: middle; }
 .admin-delete-btn {

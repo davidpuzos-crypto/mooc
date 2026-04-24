@@ -420,20 +420,128 @@ const courseData = {
     },
 
     /* ============================================================
-       MODULE 2 : Générer et éditer des contenus visuels et vidéo
+       MODULE 2 : Générer du texte, des visuels et des vidéos avec l'IA
     ============================================================ */
     {
       id: "m2",
-      title: "Générer et éditer des contenus visuels et vidéo avec l'IA",
+      title: "Générer du texte, des visuels et des vidéos avec l'IA",
       sessions: [
 
+        /* ------ Séance 5 — Prendre en main Gemini et créer son premier Gem ------ */
         {
           id: "m2s5",
-          title: "Séance 5 — Génération d'images avec l'IA (Midjourney, DALL·E)",
-          video: null,
-          intro: null,
+          title: "Séance 5 — Prendre en main Gemini et créer son premier Gem",
+          video: "https://www.youtube.com/embed/0edZKqHcqH4?si=N_zKifJk4UiUoq3c",
+          videoDesc: `Prise en main complète de Gemini et création pas à pas d'un Gem personnalisé.`,
+          description: `
+            <div class="desc-hero">
+              <div class="desc-hero-text">
+                <p>Après avoir posé les bases théoriques de l'IA et travaillé la méthode du prompting,
+                cette séance bascule dans la pratique avec <strong>Gemini</strong>, l'assistant
+                conversationnel de Google. L'objectif n'est pas seulement d'apprendre à cliquer sur les
+                bons boutons, mais de comprendre une logique nouvelle : cesser de parler à l'IA comme à
+                un inconnu à chaque nouvelle conversation, et commencer à <strong>la configurer
+                durablement</strong> pour qu'elle travaille pour vous.</p>
+                <p>Le premier temps est consacré à la <strong>prise en main de l'interface</strong>.
+                Comprendre ce qu'est Gemini dans le paysage des IA génératives, situer sa force
+                particulière liée à l'intégration dans l'écosystème Google, et savoir naviguer entre les
+                différents modes proposés. La conversation rapide pour les tâches simples, le mode
+                raisonnement pour les analyses complexes, et une première ouverture vers Deep Research.</p>
+                <p>Le second temps est le cœur de la séance : la fabrication d'un <strong>Gem</strong>,
+                c'est-à-dire un agent IA personnalisé et réutilisable. On construit ensemble, pas à pas,
+                un générateur de prompts qui applique la méthode enseignée dans la séance précédente.
+                Cette construction est l'occasion de manipuler tous les leviers d'un Gem : le rôle, les
+                instructions, les outils par défaut, et surtout la <strong>base de connaissances</strong>
+                qui permet d'ancrer l'assistant dans une matière documentaire précise.</p>
+              </div>
+              <img src="https://tisselia.com/wp-content/uploads/2026/04/gemini.png"
+                alt="Illustration — Prendre en main Gemini et créer son premier Gem"
+                class="desc-hero-img" />
+            </div>
+            <div class="session-objectives">
+              <p class="objectives-title">Objectifs de la séance</p>
+              <ul>
+                <li>Comprendre le positionnement de Gemini dans l'écosystème des IA conversationnelles</li>
+                <li>Maîtriser l'interface et savoir choisir le bon mode selon la tâche</li>
+                <li>Identifier ce qu'est un Gem et distinguer ses cas d'usage</li>
+                <li>Construire un Gem personnalisé en mobilisant toutes ses composantes</li>
+                <li>Charger une base de connaissances pour ancrer un Gem dans sa documentation métier</li>
+                <li>Adopter une démarche itérative de test et d'ajustement de l'outil</li>
+              </ul>
+            </div>
+          `,
+          intro: `<div class="session-intro-callout">
+            <span class="intro-callout-icon">💡</span>
+            <div class="intro-callout-body">
+              <p><strong>Avant de commencer</strong></p>
+              <p>Pour suivre cette séance, vous devez disposer d'un compte Gemini.
+              Rendez-vous sur <a href="http://gemini.google.com/" target="_blank" rel="noopener noreferrer">gemini.google.com</a>
+              et connectez-vous avec votre compte Google (ou créez-en un gratuitement).</p>
+            </div>
+          </div>`,
           resources: [],
-          evaluation: null
+          evaluation: {
+            type: "email",
+            instructions: `
+              <h3 class="eval-exercise-title">Évaluation de la séance 5</h3>
+              <p>Cette séance comporte <strong>deux exercices pratiques</strong> à réaliser directement dans Gemini. Les deux sont complémentaires et doivent être réalisés dans l'ordre.</p>
+
+              <hr style="border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;" />
+
+              <h4 class="eval-exercise-title">Exercice 1 — Construire votre propre générateur de prompts</h4>
+              <p><strong>Objectif :</strong> fabriquer un Gem qui vous aide à formuler de meilleurs prompts en appliquant la méthode vue en séance 4 (Rôle, Contexte, Format, Exemples, Itération).</p>
+              <p><strong>Marche à suivre :</strong></p>
+              <ol>
+                <li>Ouvrez Gemini et rendez-vous dans le <strong>Gestionnaire de Gems</strong> (menu de gauche, chevron à côté de « Gems »).</li>
+                <li>Cliquez sur « <strong>Nouveau Gem</strong> » en haut à droite de la section Mes Gems.</li>
+                <li>Remplissez les champs en vous inspirant du modèle ci-dessous. Ne copiez pas mécaniquement, reformulez avec vos mots pour adapter à votre secteur.</li>
+                <li>Chargez en base de connaissances le support de cours « L'art du prompt » fourni dans cette séance.</li>
+                <li>Enregistrez votre Gem, puis <strong>testez-le sur au moins trois situations professionnelles réelles</strong> (rédaction d'un mail, préparation d'une réunion, écriture d'une annonce…).</li>
+              </ol>
+
+              <details class="eval-details">
+                <summary>📋 Modèle d'instructions à adapter</summary>
+                <div class="eval-model-box">
+                  <p><em>Tu es un expert en ingénierie de prompts, formé à la méthode enseignée dans le document joint. Ta mission est d'aider l'utilisateur à transformer une demande vague en un prompt clair et efficace pour n'importe quelle IA générative.</em></p>
+                  <p><em>Tu procèdes toujours par étapes, en dialoguant avec lui, jamais en produisant un prompt tout fait avant d'avoir les informations nécessaires.</em></p>
+                  <p><em>Dans l'ordre, tu lui demandes d'abord quelle est sa tâche ou son objectif. Ensuite, tu l'aides à choisir un rôle pertinent que l'IA devrait endosser pour cette tâche. Puis tu l'interroges sur le contexte utile à transmettre, en lui rappelant que le modèle ne sait rien de lui, de son secteur, de son public ou de ses contraintes. Tu lui poses ensuite des questions sur la forme attendue, longueur, ton, structure, éléments à éviter. Enfin, si c'est pertinent pour sa tâche, tu lui suggères de fournir un exemple qui incarne ce qu'il attend.</em></p>
+                  <p><em>Quand tu as rassemblé tous ces éléments, tu produis un prompt final, propre et prêt à être copié-collé dans n'importe quelle IA. Tu termines toujours en invitant l'utilisateur à tester ce prompt, puis à revenir vers toi pour l'ajuster si le résultat n'est pas satisfaisant.</em></p>
+                  <p><em>Tu proscris les réponses mécaniques et condescendantes. Tu gardes un ton direct et professionnel. Tu as aussi la permission explicite de dire « je ne sais pas » si une demande sort de ton champ.</em></p>
+                </div>
+              </details>
+
+              <p><strong>Critères de validation :</strong></p>
+              <ul>
+                <li>Votre Gem engage bien un dialogue par étapes au lieu de produire une réponse immédiate</li>
+                <li>Il s'appuie sur la méthode du support de cours</li>
+                <li>Il produit en fin d'échange un prompt structuré et réutilisable</li>
+                <li>Vous l'avez testé sur trois situations réelles et observé la différence avec vos prompts habituels</li>
+              </ul>
+
+              <hr style="border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;" />
+
+              <h4 class="eval-exercise-title">Exercice 2 — Créer un Gem adapté à votre projet</h4>
+              <p><strong>Objectif :</strong> passer du générique au sur-mesure en fabriquant un Gem qui automatise une tâche récurrente de votre activité.</p>
+              <p><strong>Marche à suivre :</strong></p>
+              <ol>
+                <li><strong>Identifiez une tâche récurrente</strong> qui gagnerait à être outillée. Quelques pistes : préparation de présentations, relecture d'écrits commerciaux, génération d'idées de contenus, synthèse de comptes rendus, rédaction de fiches de poste, reformulation de devis…</li>
+                <li><strong>Réfléchissez au cadrage</strong> avant d'ouvrir Gemini. Quel rôle l'assistant doit-il endosser ? Quel contexte doit-il toujours avoir en tête ? Quel format de réponse attendez-vous ? Quelles formulations voulez-vous éviter ?</li>
+                <li>Ouvrez Gemini, cliquez sur « <strong>Nouveau Gem</strong> » et remplissez les cinq champs (nom, description, instructions, outil par défaut, base de connaissances).</li>
+                <li>Si vous bloquez sur la rédaction des instructions, <strong>utilisez le générateur de prompts de l'exercice 1</strong> pour vous aider à les formuler. C'est exactement à ça qu'il sert.</li>
+                <li><strong>Chargez en base de connaissances</strong> un ou plusieurs documents pertinents : votre pitch deck, une charte éditoriale, un modèle de document, des exemples de production. Attention à ne pas inclure de données confidentielles ou personnelles sensibles.</li>
+                <li><strong>Testez, observez, ajustez, retestez.</strong> Un Gem se construit par itérations successives, pas d'un seul jet.</li>
+              </ol>
+
+              <p><strong>Critères de validation :</strong></p>
+              <ul>
+                <li>Le Gem répond à un besoin réel et récurrent de votre activité</li>
+                <li>Les instructions sont précises et reflètent votre contexte professionnel</li>
+                <li>Une base de connaissances pertinente est intégrée</li>
+                <li>Vous avez effectué au moins un cycle d'ajustement après un premier test</li>
+                <li>Le Gem produit un résultat que vous auriez réellement l'usage d'utiliser au quotidien</li>
+              </ul>
+            `
+          }
         },
         {
           id: "m2s6",
