@@ -543,13 +543,148 @@ const courseData = {
             `
           }
         },
+        /* ------ Séance 6 — Lire, créer et éditer des images avec Gemini ------ */
         {
           id: "m2s6",
-          title: "Séance 6 — Retouche et édition d'images par l'IA",
-          video: null,
-          intro: null,
-          resources: [],
-          evaluation: null
+          title: "Séance 6 — Lire, créer et éditer des images avec Gemini",
+          video: "https://www.youtube.com/embed/LxTETgM2c04?si=-bghJJKA_11SSYCC",
+          videoDesc: `Exploiter toute la puissance multimodale de Gemini : lecture, génération et édition d'images.`,
+          description: `
+            <div class="desc-hero">
+              <div class="desc-hero-text">
+                <p>Après avoir appris à configurer Gemini et à fabriquer votre premier Gem, cette séance
+                bascule dans le <strong>travail visuel</strong>. L'objectif est de comprendre que Gemini
+                n'est pas seulement un outil de texte, mais un véritable <strong>modèle multimodal</strong>
+                qui sait lire, générer et transformer des images. Pour des porteurs de projet, c'est une
+                capacité qui change radicalement le quotidien, parce qu'elle remplace plusieurs heures de
+                logiciels de retouche par quelques minutes de dialogue avec une IA.</p>
+                <p>Le premier temps est consacré à la <strong>lecture d'image</strong>, une capacité souvent
+                ignorée et pourtant immédiatement utile. À travers trois exercices concrets (traduire un
+                menu avec son contexte culturel, demander une aide à la réparation avec un budget et des
+                matériaux, transformer le contenu d'un frigo en propositions de recettes), on apprend à
+                enrichir un prompt avec une matière visuelle.</p>
+                <p>Le deuxième temps porte sur la <strong>génération d'images</strong>, à travers un projet
+                fil rouge volontairement riche : l'illustration d'un livre pour enfants sur le Kurdistan.
+                On part d'un prompt pauvre, on l'enrichit progressivement, on découvre les styles préfaits
+                proposés par Gemini, et on apprend à s'appuyer sur des outils complémentaires comme
+                PromptOmania pour construire des prompts optimisés.</p>
+                <p>Le troisième temps introduit une technique puissante mais peu connue : le travail avec
+                des <strong>images de référence</strong>. Plutôt que de décrire avec des mots un univers
+                visuel, on le montre à la machine, qui s'en inspire pour produire des résultats
+                incomparablement plus justes. C'est ce qu'on appelle l'<em>image to image</em>.</p>
+                <p>Le quatrième temps est consacré à l'<strong>édition d'images existantes</strong>.
+                Coloriser une vieille photographie, créer un mockup avec un logo pour présenter un produit
+                avant fabrication, transformer un portrait pour générer ses propres photos
+                professionnelles.</p>
+                <p>Enfin, la séance se conclut par un volet essentiel : le <strong>droit d'auteur et le
+                droit à l'image</strong> dans le contexte de l'IA générative. Ce que dit le droit français
+                aujourd'hui, ce que prévoit l'AI Act européen, ce qu'on peut faire ou pas avec son propre
+                visage ou celui d'autrui, et les réflexes à intégrer durablement.</p>
+              </div>
+              <img src="https://tisselia.com/wp-content/uploads/2026/05/images-et-gemini.png"
+                alt="Illustration — Lire, créer et éditer des images avec Gemini"
+                class="desc-hero-img" />
+            </div>
+            <div class="session-objectives">
+              <p class="objectives-title">Objectifs de la séance</p>
+              <ul>
+                <li>Comprendre que Gemini est un modèle multimodal capable de lire, générer et transformer des images</li>
+                <li>Maîtriser la lecture d'image avec ajout de contexte pour obtenir des réponses actionnables</li>
+                <li>Construire des prompts d'image enrichis selon la méthode Rôle, Contexte, Format</li>
+                <li>Distinguer l'usage des styles préfaits, des outils tiers et du prompting manuel</li>
+                <li>S'approprier la technique des images de référence pour gagner en cohérence visuelle</li>
+                <li>Réaliser des opérations courantes d'édition (colorisation, mockup produit, mockup portrait)</li>
+                <li>Identifier les enjeux juridiques liés au droit d'auteur et au droit à l'image dans le contexte de l'IA</li>
+              </ul>
+            </div>
+          `,
+          resources: [
+            {
+              label: "Support de cours — Tutoriel Gemini Images",
+              url: "https://tisselia.com/wp-content/uploads/2026/05/Tutoriel-Gemini-Images.pptx.pdf",
+              icon: "📄",
+              recap: true
+            }
+          ],
+          evaluation: {
+            type: "email",
+            instructions: `
+              <h3 class="eval-exercise-title">Évaluation de la séance 6</h3>
+              <p>Cette séance comporte <strong>deux exercices pratiques</strong> à réaliser directement dans Gemini. Les deux sont complémentaires et doivent être réalisés dans l'ordre.</p>
+
+              <hr style="border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;" />
+
+              <h4 class="eval-exercise-title">Exercice 1 — Pratiquer la lecture d'image avec Gemini</h4>
+              <p><strong>Objectif :</strong> se familiariser avec la capacité multimodale de Gemini en faisant analyser une image par la machine et en l'orientant vers une réponse utile par l'ajout de contexte.</p>
+              <p><strong>Marche à suivre :</strong></p>
+              <ol>
+                <li>Prenez votre téléphone et <strong>photographiez une scène, un objet ou un document</strong> en lien direct avec votre projet ou votre quotidien.</li>
+                <li>Importez la photo dans <a href="http://gemini.google.com/" target="_blank" rel="noopener noreferrer">Gemini</a> en cliquant sur le petit plus en bas de la zone de saisie.</li>
+                <li>Choisissez l'un des trois usages vus dans la séance, ou inventez le vôtre : traduire un texte avec son contexte culturel, demander une aide concrète avec des contraintes (budget, matériaux, temps), ou solliciter une analyse créative à partir d'un visuel.</li>
+                <li>Rédigez un prompt qui ne se contente pas de demander une description, mais qui <strong>pose un cadre</strong>. Précisez le rôle attendu de la machine, le contexte de votre demande, et le format de réponse souhaité.</li>
+                <li>Lisez attentivement la réponse de Gemini, puis <strong>itérez</strong> si nécessaire en affinant votre prompt.</li>
+              </ol>
+
+              <details class="eval-details">
+                <summary>📋 Pistes de cas pratiques</summary>
+                <div class="eval-model-box">
+                  <ul>
+                    <li>Photographier un menu en langue étrangère et demander une traduction enrichie d'explications culturelles</li>
+                    <li>Photographier un objet à réparer et demander des pistes de réparation avec un budget et des outils précisés</li>
+                    <li>Photographier le contenu d'un frigo et demander des recettes adaptées à des contraintes alimentaires</li>
+                    <li>Photographier un document administratif complexe et demander une reformulation en langage clair</li>
+                    <li>Photographier un lieu et demander une analyse de son atmosphère pour nourrir un projet créatif</li>
+                  </ul>
+                </div>
+              </details>
+
+              <p><strong>Critères de validation :</strong></p>
+              <ul>
+                <li>Vous avez utilisé une image issue de votre propre contexte, pas une image générique</li>
+                <li>Votre prompt précise un rôle, un contexte et un format attendu</li>
+                <li>La réponse de Gemini est exploitable et actionnable, pas générique</li>
+                <li>Vous avez itéré au moins une fois pour affiner le résultat</li>
+              </ul>
+
+              <hr style="border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;" />
+
+              <h4 class="eval-exercise-title">Exercice 2 — Générer une image enrichie pour votre projet</h4>
+              <p><strong>Objectif :</strong> passer du prompt pauvre au prompt enrichi en appliquant la méthode vue dans la séance, et constater concrètement la différence de qualité dans le résultat produit.</p>
+              <p><strong>Marche à suivre :</strong></p>
+              <ol>
+                <li><strong>Identifiez un besoin visuel concret</strong> en lien avec votre projet : une illustration de page de site, un visuel pour réseaux sociaux, une image conceptuelle pour une présentation, une couverture de document, un mockup produit.</li>
+                <li>Activez la génération d'image dans <a href="http://gemini.google.com/" target="_blank" rel="noopener noreferrer">Gemini</a>, soit via le menu Outils puis « Créer une image », soit en tapant directement « génère moi une image de » dans la conversation.</li>
+                <li>Commencez volontairement par un <strong>prompt court et pauvre</strong>, par exemple « une image pour mon projet ». Notez le résultat obtenu.</li>
+                <li>Rédigez ensuite un <strong>prompt enrichi</strong> en intégrant explicitement les sept couches vues en cours : la technique ou le médium, le sujet précis, la lumière, la palette de couleurs, la composition, le style de référence, l'ambiance. Si vous bloquez, utilisez le générateur de prompts construit en séance 5 ou rendez-vous sur PromptOmania.</li>
+                <li><strong>Comparez les deux résultats</strong> côte à côte et observez l'écart.</li>
+                <li>Pour aller plus loin, testez la <strong>technique des images de référence</strong> en chargeant deux ou trois photos qui incarnent l'univers visuel que vous recherchez, et demandez à Gemini de s'en inspirer.</li>
+              </ol>
+
+              <details class="eval-details">
+                <summary>📋 Modèle de prompt enrichi à adapter</summary>
+                <div class="eval-model-box">
+                  <code style="white-space:pre-line;display:block;font-size:0.88rem;line-height:1.7;">
+[Technique ou médium] de [sujet précis avec détails],
+[description de la scène ou de la composition],
+lumière [type de lumière et ambiance],
+palette [trois ou quatre couleurs dominantes],
+composition [centrée, en tiers, plan large, gros plan],
+style inspiré de [référence visuelle],
+ambiance [adjectifs qui qualifient l'émotion attendue],
+format [carré, portrait, paysage, ratio précis].</code>
+                </div>
+              </details>
+
+              <p><strong>Critères de validation :</strong></p>
+              <ul>
+                <li>Vous avez produit au moins deux versions de la même image : une avec un prompt pauvre et une avec un prompt enrichi</li>
+                <li>La version enrichie intègre au minimum cinq des sept couches d'un prompt visuel</li>
+                <li>Vous avez testé au moins une fois la technique des images de référence</li>
+                <li>Vous avez identifié dans votre résultat ce qui fonctionne et ce que vous voudriez ajuster</li>
+                <li>Le résultat obtenu pourrait être utilisé concrètement dans votre projet, ou est très proche de l'être</li>
+              </ul>
+            `
+          }
         },
         {
           id: "m2s7",
