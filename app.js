@@ -1121,13 +1121,16 @@ function initQuizInteraction(questions, sessionId, onPassed) {
   if (showAnswersBtn) {
     showAnswersBtn.addEventListener('click', () => {
       questions.forEach(q => {
-        /* Surligner la bonne réponse en vert pour chaque question */
-        const correctEl = section.querySelector(
-          `.quiz-option[data-qid="${q.id}"][data-oid="${q.answer}"]`
-        );
-        if (correctEl) correctEl.classList.add('correct', 'reveal');
+        const block = section.querySelector(`.quiz-question-block[data-qid="${q.id}"]`);
+        if (!block) return;
+        /* Surligner la bonne réponse en vert */
+        const correctEl = block.querySelector(`.quiz-option[data-oid="${q.answer}"]`);
+        if (correctEl) {
+          correctEl.classList.remove('wrong');
+          correctEl.classList.add('correct', 'reveal');
+        }
 
-        /* Mettre à jour le feedback pour préciser la bonne réponse si l'élève s'est trompé */
+        /* Mettre à jour le feedback pour les réponses fausses */
         const chosen   = userAnswers[q.id];
         const feedback = document.getElementById(`feedback_${q.id}`);
         if (feedback && chosen !== q.answer) {
