@@ -914,6 +914,7 @@ function buildQcmHTML(questions, savedScore) {
   html += `
       <div class="quiz-actions">
         <button class="quiz-validate-btn" id="quiz-validate-btn" disabled>Valider mes réponses</button>
+        <button class="quiz-show-answers-btn hidden" id="quiz-show-answers-btn">👀 Voir les bonnes réponses</button>
         <button class="quiz-retry-btn hidden" id="quiz-retry-btn">🔄 Réessayer</button>
       </div>
     </div>`;
@@ -1029,10 +1030,11 @@ function initQuizInteraction(questions, sessionId, onPassed) {
   if (!section || section.dataset.quizReady) return;
   section.dataset.quizReady = '1';
 
-  const userAnswers = {};
-  const validateBtn = document.getElementById('quiz-validate-btn');
-  const retryBtn    = document.getElementById('quiz-retry-btn');
-  const scoreBanner = document.getElementById('quiz-score-banner');
+  const userAnswers    = {};
+  const validateBtn    = document.getElementById('quiz-validate-btn');
+  const retryBtn       = document.getElementById('quiz-retry-btn');
+  const showAnswersBtn = document.getElementById('quiz-show-answers-btn');
+  const scoreBanner    = document.getElementById('quiz-score-banner');
 
   /* ── Sélection d'une option ── */
   function selectOption(qid, oid) {
@@ -1111,15 +1113,38 @@ function initQuizInteraction(questions, sessionId, onPassed) {
 
     validateBtn.classList.add('hidden');
     if (retryBtn) retryBtn.classList.remove('hidden');
+    if (showAnswersBtn) showAnswersBtn.classList.remove('hidden');
     if (passed) onPassed();
   });
+
+  /* ── Voir les bonnes réponses (opt-in : seulement après validation) ── */
+  if (showAnswersBtn) {
+    showAnswersBtn.addEventListener('click', () => {
+      questions.forEach(q => {
+        /* Surligner la bonne réponse en vert pour chaque question */
+        const correctEl = section.querySelector(
+          `.quiz-option[data-qid="${q.id}"][data-oid="${q.answer}"]`
+        );
+        if (correctEl) correctEl.classList.add('correct', 'reveal');
+
+        /* Mettre à jour le feedback pour préciser la bonne réponse si l'élève s'est trompé */
+        const chosen   = userAnswers[q.id];
+        const feedback = document.getElementById(`feedback_${q.id}`);
+        if (feedback && chosen !== q.answer) {
+          const correctText = q.options.find(o => o.id === q.answer)?.text || '';
+          feedback.innerHTML = `❌ Mauvaise réponse. <span class="quiz-correct-hint">Bonne réponse : ${correctText}</span>`;
+        }
+      });
+      showAnswersBtn.classList.add('hidden');
+    });
+  }
 
   /* ── Réessayer ── */
   if (retryBtn) {
     retryBtn.addEventListener('click', () => {
       Object.keys(userAnswers).forEach(k => delete userAnswers[k]);
       section.querySelectorAll('.quiz-option').forEach(el => {
-        el.classList.remove('selected', 'correct', 'wrong', 'locked');
+        el.classList.remove('selected', 'correct', 'wrong', 'locked', 'reveal');
         el.setAttribute('aria-checked', 'false');
       });
       section.querySelectorAll('.quiz-feedback').forEach(el => {
@@ -1130,6 +1155,7 @@ function initQuizInteraction(questions, sessionId, onPassed) {
       validateBtn.disabled = true;
       validateBtn.classList.remove('hidden');
       retryBtn.classList.add('hidden');
+      if (showAnswersBtn) showAnswersBtn.classList.add('hidden');
     });
   }
 }
