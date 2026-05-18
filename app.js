@@ -286,6 +286,11 @@ auth.onAuthStateChanged((user) => {
     }
 
     startUserDocListener(user.uid);
+
+    /* Enregistrer la date de dernière connexion */
+    db.collection('users').doc(user.uid).update({
+      lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(() => {});
   } else {
     /* Utilisateur déconnecté */
     currentUser        = null;
@@ -1454,6 +1459,111 @@ function renderAdminStats(users) {
 }
 
 /* ============================================================
+   18b. ADMIN — Mails pré-rédigés (mailto)
+   ============================================================ */
+
+function buildMailto(to, subject, body) {
+  return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+function mailPayment(email) {
+  return buildMailto(email,
+    'Tisselia — Finalisez votre inscription',
+    `Bonjour,
+
+Merci pour votre inscription sur la plateforme Tisselia !
+
+Pour accéder à la formation « Intelligence Artificielle & Cybersécurité », veuillez procéder au paiement via le lien sécurisé ci-dessous :
+
+\u{1F517} https://buy.stripe.com/VOTRE-LIEN-STRIPE
+
+Tarif : 150 € — Accès 6 mois à l’intégralité de la formation.
+
+Une fois le paiement confirmé, votre accès sera activé dans les plus brefs délais.
+
+À très bientôt sur Tisselia !
+
+David Puzos
+Formateur — Tisselia
+davidpuzos@tisselia.com`
+  );
+}
+
+function mailWelcome(email) {
+  return buildMailto(email,
+    'Tisselia — Votre accès est activé !',
+    `Bonjour,
+
+Bonne nouvelle : votre accès à la formation « Intelligence Artificielle & Cybersécurité » est désormais activé !
+
+Connectez-vous dès maintenant sur :
+\u{1F517} https://tisselia.com
+
+Comment démarrer :
+1. Connectez-vous avec l’adresse e-mail utilisée lors de votre inscription
+2. Retrouvez vos séances dans le menu à gauche
+3. Regardez la vidéo, consultez les ressources, puis validez le quiz (75 % minimum)
+
+Si vous avez la moindre question, n’hésitez pas à me contacter directement en répondant à cet e-mail.
+
+Bonne formation !
+
+David Puzos
+Formateur — Tisselia
+davidpuzos@tisselia.com`
+  );
+}
+
+function mailRelaunch(email) {
+  return buildMailto(email,
+    'Tisselia — On ne vous oublie pas !',
+    `Bonjour,
+
+J’espère que vous allez bien !
+
+Je me permets de vous écrire car nous avons remarqué que vous ne vous êtes pas connecté(e) à la plateforme Tisselia depuis un moment.
+
+Votre formation « Intelligence Artificielle & Cybersécurité » vous attend toujours, et votre progression est sauvegardée — vous pouvez reprendre exactement là où vous en étiez.
+
+\u{1F517} https://tisselia.com
+
+N’hésitez pas à me contacter si vous rencontrez une difficulté ou si vous avez des questions sur le contenu.
+
+À bientôt !
+
+David Puzos
+Formateur — Tisselia
+davidpuzos@tisselia.com`
+  );
+}
+
+function mailExpiration(email) {
+  return buildMailto(email,
+    'Tisselia — Votre accès arrive à expiration',
+    `Bonjour,
+
+Votre accès à la formation « Intelligence Artificielle & Cybersécurité » sur Tisselia arrive à expiration, car il a été activé il y a plus de 6 mois.
+
+Si vous souhaitez poursuivre ou reprendre votre formation, n’hésitez pas à me contacter pour que nous trouvions une solution ensemble.
+
+À bientôt,
+
+David Puzos
+Formateur — Tisselia
+davidpuzos@tisselia.com`
+  );
+}
+
+/** Vérifie si un compte a plus de 6 mois. */
+function isOlderThan6Months(ts) {
+  if (!ts) return false;
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+  return d < sixMonthsAgo;
+}
+
+/* ============================================================
    19. ADMIN — Tableau des élèves
    ============================================================ */
 
@@ -1510,7 +1620,8 @@ function renderUsersTable(users) {
     pending:    active.filter(u => u.status === 'pending').length,
     approved:   active.filter(u => u.status === 'approved').length,
     'no-access':active.filter(u => (u.maxSessionUnlocked || 0) === 0).length,
-    active:     active.filter(u => (u.completedSessions || []).length > 0).length
+    active:     active.filter(u => (u.completedSessions || []).length > 0).length,
+    expired:    active.filter(u => isOlderThan6Months(u.createdAt)).length
   };
   document.querySelectorAll('.admin-filter-chip').forEach(chip => {
     const k = chip.dataset.filter;
@@ -1526,6 +1637,7 @@ function renderUsersTable(users) {
   if (adminFilter === 'approved')  filtered = filtered.filter(u => u.status === 'approved');
   if (adminFilter === 'no-access') filtered = filtered.filter(u => (u.maxSessionUnlocked || 0) === 0);
   if (adminFilter === 'active')    filtered = filtered.filter(u => (u.completedSessions || []).length > 0);
+  if (adminFilter === 'expired')   filtered = filtered.filter(u => isOlderThan6Months(u.createdAt));
 
   /* ── Recherche ── */
   if (adminSearch) {
@@ -1596,8 +1708,11 @@ function renderUsersTable(users) {
         quizDetailHtml += '</div></div>';
       }
 
+      const expired     = isOlderThan6Months(user.createdAt);
+      const lastLogin   = user.lastLoginAt ? fmtAgo(user.lastLoginAt) : 'jamais';
+
       html += `
-        <article class="user-card ${isApproved ? 'is-approved' : 'is-pending'}" data-uid="${user.id}">
+        <article class="user-card ${isApproved ? 'is-approved' : 'is-pending'} ${expired ? 'is-expired' : ''}" data-uid="${user.id}">
           <header class="user-card-header">
             <div class="user-card-identity">
               <span class="user-avatar-circle">${initial}</span>
@@ -1606,9 +1721,15 @@ function renderUsersTable(users) {
                 <span class="user-card-sub">
                   Inscrit le ${fmtDate(user.createdAt)} · <span class="user-card-ago">${fmtAgo(user.createdAt)}</span>
                 </span>
+                <span class="user-card-sub">
+                  Dernière connexion : <strong>${lastLogin}</strong>
+                </span>
               </div>
             </div>
-            <span class="user-card-status ${isApproved ? 'approved' : 'pending'}">${statusLabel}</span>
+            <div class="user-card-badges">
+              <span class="user-card-status ${isApproved ? 'approved' : 'pending'}">${statusLabel}</span>
+              ${expired ? '<span class="user-card-status expired">⚠️ &gt; 6 mois</span>' : ''}
+            </div>
           </header>
 
           <div class="user-card-body">
@@ -1646,6 +1767,12 @@ function renderUsersTable(users) {
             <button class="admin-delete-btn" data-uid="${user.id}" data-email="${user.email}"
               title="Supprimer ce compte">🗑️</button>
           </footer>
+
+          <div class="user-card-mails">
+            <a href="${mailPayment(user.email)}" class="mail-action-btn mail-payment" title="Envoyer le lien de paiement">💳 Paiement</a>
+            <a href="${mailRelaunch(user.email)}" class="mail-action-btn mail-relaunch" title="Envoyer un mail de relance">📩 Relancer</a>
+            ${expired ? `<button class="mail-action-btn mail-revoke" data-uid="${user.id}" data-email="${user.email}" title="Révoquer et notifier par email">⚠️ Révoquer</button>` : ''}
+          </div>
 
           ${isExpanded ? `<div class="user-card-detail">${quizDetailHtml || "<p class='user-detail-empty'>Aucun quiz tenté pour l'instant.</p>"}</div>` : ''}
         </article>`;
@@ -1699,7 +1826,7 @@ function renderUsersTable(users) {
     });
   });
 
-  /* Toggle statut (pending ↔ approved) */
+  /* Toggle statut (pending ↔ approved) + mail de bienvenue */
   usersTableWrapper.querySelectorAll('.status-toggle-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const uid       = btn.dataset.uid;
@@ -1707,7 +1834,12 @@ function renderUsersTable(users) {
       btn.disabled = true;
       try {
         await db.collection('users').doc(uid).update({ status: newStatus });
-        /* Le onSnapshot met à jour le tableau automatiquement */
+        /* Si on vient d'approuver → ouvrir le mail de bienvenue */
+        if (newStatus === 'approved') {
+          const card  = btn.closest('.user-card');
+          const email = card?.querySelector('.user-card-email')?.textContent;
+          if (email) window.open(mailWelcome(email), '_blank');
+        }
       } catch (err) {
         console.error('Erreur mise à jour statut :', err);
         btn.disabled = false;
@@ -1748,6 +1880,27 @@ function renderUsersTable(users) {
           showToast('❌ Échec de la suppression — réessayez.', 'error');
         }
       });
+    });
+  });
+
+  /* Révoquer un compte expiré (>6 mois) → soft-delete + mail */
+  usersTableWrapper.querySelectorAll('.mail-revoke').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const uid   = btn.dataset.uid;
+      const email = btn.dataset.email;
+      if (!confirm(`Révoquer l'accès de ${email} et envoyer un mail de notification ?`)) return;
+      btn.disabled = true;
+      try {
+        await db.collection('users').doc(uid).update({
+          status: 'deleted',
+          deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        window.open(mailExpiration(email), '_blank');
+        showToast(`Accès de ${email} révoqué.`);
+      } catch (err) {
+        console.error('Erreur révocation :', err);
+        btn.disabled = false;
+      }
     });
   });
 
