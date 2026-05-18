@@ -675,6 +675,34 @@
           </div>
           <div id="admin-stats" class="admin-stats"></div>
         </div>
+
+        <!-- Barre d'outils : recherche, filtres, tri -->
+        <div class="admin-toolbar">
+          <div class="admin-toolbar-search">
+            <span class="admin-search-icon">🔍</span>
+            <input type="text" id="admin-search" placeholder="Rechercher un élève par e-mail…" autocomplete="off" />
+            <button id="admin-search-clear" class="admin-search-clear hidden" aria-label="Effacer">✕</button>
+          </div>
+          <div class="admin-toolbar-filters" id="admin-filters" role="tablist">
+            <button class="admin-filter-chip active" data-filter="all">Tous</button>
+            <button class="admin-filter-chip" data-filter="pending">⏳ En attente</button>
+            <button class="admin-filter-chip" data-filter="approved">✅ Approuvés</button>
+            <button class="admin-filter-chip" data-filter="no-access">🔒 Sans accès</button>
+            <button class="admin-filter-chip" data-filter="active">📚 Actifs</button>
+          </div>
+          <div class="admin-toolbar-sort">
+            <label for="admin-sort">Trier :</label>
+            <select id="admin-sort">
+              <option value="createdDesc">Plus récents</option>
+              <option value="createdAsc">Plus anciens</option>
+              <option value="progressDesc">Progression ↓</option>
+              <option value="progressAsc">Progression ↑</option>
+              <option value="scoreDesc">Score quiz ↓</option>
+              <option value="emailAsc">E-mail (A-Z)</option>
+            </select>
+          </div>
+        </div>
+
         <div id="users-table-wrapper" class="users-table-wrapper">
           <p class="admin-loading">Chargement des élèves…</p>
         </div>

@@ -87,6 +87,11 @@ let currentSessionId  = null;   // ID de la séance actuellement affichée
 let completedSessions = new Set(); // miroir local de userDoc.completedSessions
 let adminPanelActive  = false;  // true quand le tableau de bord admin est affiché
 let platformShown     = false;  // true après le premier affichage de la plateforme (évite de re-naviguer sur Accueil à chaque update Firestore)
+let adminUsersCache   = [];     // dernière liste users reçue de Firestore (pour re-render sur filtre/tri)
+let adminFilter       = 'all';  // 'all' | 'pending' | 'approved' | 'no-access' | 'active'
+let adminSearch       = '';     // texte de recherche (email)
+let adminSort         = 'createdDesc'; // tri courant
+let expandedUserIds   = new Set(); // lignes dépliées (détail quiz)
 
 /* ============================================================
    3. RÉFÉRENCES DOM
@@ -1381,6 +1386,7 @@ function startAdminUsersListener() {
     .onSnapshot(snapshot => {
       const users = [];
       snapshot.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
+      adminUsersCache = users;
       renderAdminStats(users);
       renderUsersTable(users);
     }, err => {
@@ -1397,6 +1403,10 @@ function renderAdminStats(users) {
   const approved    = students.filter(u => u.status === 'approved').length;
   const pending     = students.filter(u => u.status === 'pending').length;
   const total       = totalSessions();
+  const allQuizPcts = students.flatMap(u => Object.values(u.quizScores || {}).map(q => q.pct));
+  const avgQuiz     = allQuizPcts.length
+    ? Math.round(allQuizPcts.reduce((a, b) => a + b, 0) / allQuizPcts.length)
+    : null;
   const avgDone     = students.length > 0
     ? Math.round(
         students.reduce((sum, u) => sum + (u.completedSessions?.length || 0), 0)
@@ -1406,20 +1416,39 @@ function renderAdminStats(users) {
 
   adminStats.innerHTML = `
     <div class="admin-stat-card">
-      <span class="stat-value">${students.length}</span>
-      <span class="stat-label">Élèves inscrits</span>
+      <span class="stat-icon">👥</span>
+      <div class="stat-body">
+        <span class="stat-value">${students.length}</span>
+        <span class="stat-label">Élèves inscrits</span>
+      </div>
     </div>
     <div class="admin-stat-card approved">
-      <span class="stat-value">${approved}</span>
-      <span class="stat-label">Approuvés</span>
+      <span class="stat-icon">✅</span>
+      <div class="stat-body">
+        <span class="stat-value">${approved}</span>
+        <span class="stat-label">Approuvés</span>
+      </div>
     </div>
     <div class="admin-stat-card pending">
-      <span class="stat-value">${pending}</span>
-      <span class="stat-label">En attente</span>
+      <span class="stat-icon">⏳</span>
+      <div class="stat-body">
+        <span class="stat-value">${pending}</span>
+        <span class="stat-label">En attente</span>
+      </div>
     </div>
     <div class="admin-stat-card">
-      <span class="stat-value">${avgDone}<span style="font-size:1rem;font-weight:400;color:var(--text-secondary)">/${total}</span></span>
-      <span class="stat-label">Séances moy.</span>
+      <span class="stat-icon">📊</span>
+      <div class="stat-body">
+        <span class="stat-value">${avgDone}<span class="stat-value-sub">/${total}</span></span>
+        <span class="stat-label">Progression moy.</span>
+      </div>
+    </div>
+    <div class="admin-stat-card ${avgQuiz !== null ? (avgQuiz >= 75 ? 'score-ok' : 'score-low') : ''}">
+      <span class="stat-icon">🎯</span>
+      <div class="stat-body">
+        <span class="stat-value">${avgQuiz !== null ? avgQuiz + '%' : '—'}</span>
+        <span class="stat-label">Moy. quiz globale</span>
+      </div>
     </div>
   `;
 }
@@ -1428,13 +1457,45 @@ function renderAdminStats(users) {
    19. ADMIN — Tableau des élèves
    ============================================================ */
 
+/* Format date courte FR (« 12 avr. 2026 ») */
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+/* Distance « il y a X jours / mois » */
+function fmtAgo(ts) {
+  if (!ts) return '';
+  const d  = ts.toDate ? ts.toDate() : new Date(ts);
+  const ms = Date.now() - d.getTime();
+  const days = Math.floor(ms / 86400000);
+  if (days < 1)   return "aujourd'hui";
+  if (days === 1) return 'hier';
+  if (days < 30)  return `il y a ${days} j`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `il y a ${months} mois`;
+  return `il y a ${Math.floor(months / 12)} an${Math.floor(months / 12) > 1 ? 's' : ''}`;
+}
+
+/** Calcule les KPI d'un élève. */
+function studentMetrics(user, total) {
+  const done        = (user.completedSessions || []).length;
+  const pct         = total > 0 ? Math.round((done / total) * 100) : 0;
+  const quizScores  = Object.values(user.quizScores || {});
+  const avgQuiz     = quizScores.length
+    ? Math.round(quizScores.reduce((s, q) => s + q.pct, 0) / quizScores.length)
+    : null;
+  return { done, pct, quizScores, avgQuiz, quizCount: quizScores.length };
+}
+
 function renderUsersTable(users) {
   const allStudents = users.filter(u => u.role !== 'admin');
-  const students    = allStudents.filter(u => u.status !== 'deleted');
+  const active      = allStudents.filter(u => u.status !== 'deleted');
   const deleted     = allStudents.filter(u => u.status === 'deleted');
   const total       = totalSessions();
 
-  if (!students.length && !deleted.length) {
+  if (!allStudents.length) {
     usersTableWrapper.innerHTML = `
       <div class="admin-empty">
         <span>📭</span>
@@ -1442,6 +1503,53 @@ function renderUsersTable(users) {
       </div>`;
     return;
   }
+
+  /* Mise à jour des compteurs dans les filter chips */
+  const counts = {
+    all:        active.length,
+    pending:    active.filter(u => u.status === 'pending').length,
+    approved:   active.filter(u => u.status === 'approved').length,
+    'no-access':active.filter(u => (u.maxSessionUnlocked || 0) === 0).length,
+    active:     active.filter(u => (u.completedSessions || []).length > 0).length
+  };
+  document.querySelectorAll('.admin-filter-chip').forEach(chip => {
+    const k = chip.dataset.filter;
+    chip.classList.toggle('active', k === adminFilter);
+    /* Texte original sans (count) en suffixe, on l'ajoute */
+    const baseText = chip.textContent.replace(/\s*\(\d+\)\s*$/, '');
+    chip.innerHTML = `${baseText} <span class="filter-chip-count">${counts[k] ?? 0}</span>`;
+  });
+
+  /* ── Filtrage ── */
+  let filtered = active.slice();
+  if (adminFilter === 'pending')   filtered = filtered.filter(u => u.status === 'pending');
+  if (adminFilter === 'approved')  filtered = filtered.filter(u => u.status === 'approved');
+  if (adminFilter === 'no-access') filtered = filtered.filter(u => (u.maxSessionUnlocked || 0) === 0);
+  if (adminFilter === 'active')    filtered = filtered.filter(u => (u.completedSessions || []).length > 0);
+
+  /* ── Recherche ── */
+  if (adminSearch) {
+    const q = adminSearch.toLowerCase();
+    filtered = filtered.filter(u => (u.email || '').toLowerCase().includes(q));
+  }
+
+  /* ── Tri ── */
+  const getTime = t => (t?.toDate ? t.toDate().getTime() : (t ? new Date(t).getTime() : 0));
+  filtered.sort((a, b) => {
+    switch (adminSort) {
+      case 'createdAsc':   return getTime(a.createdAt) - getTime(b.createdAt);
+      case 'progressDesc': return (b.completedSessions?.length || 0) - (a.completedSessions?.length || 0);
+      case 'progressAsc':  return (a.completedSessions?.length || 0) - (b.completedSessions?.length || 0);
+      case 'scoreDesc': {
+        const mA = studentMetrics(a, total).avgQuiz ?? -1;
+        const mB = studentMetrics(b, total).avgQuiz ?? -1;
+        return mB - mA;
+      }
+      case 'emailAsc':     return (a.email || '').localeCompare(b.email || '');
+      case 'createdDesc':
+      default:             return getTime(b.createdAt) - getTime(a.createdAt);
+    }
+  });
 
   /* Génère les <option> pour le select maxSessionUnlocked */
   function sessionOptions(maxUnlocked) {
@@ -1452,86 +1560,98 @@ function renderUsersTable(users) {
     return opts;
   }
 
-  let html = `
-    <table class="users-table">
-      <thead>
-        <tr>
-          <th>Élève</th>
-          <th>Statut</th>
-          <th>Accès (jusqu'à)</th>
-          <th>Progression</th>
-          <th>Score quiz</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>`;
+  let html = '';
 
-  students.forEach(user => {
-    const done        = (user.completedSessions || []).length;
-    const isApproved  = user.status === 'approved';
-    const maxUnlocked = user.maxSessionUnlocked || 0;
-    const pct         = total > 0 ? Math.round((done / total) * 100) : 0;
-
-    /* Score moyen des quiz */
-    const quizScores  = Object.values(user.quizScores || {});
-    const avgQuiz     = quizScores.length
-      ? Math.round(quizScores.reduce((s, q) => s + q.pct, 0) / quizScores.length)
-      : null;
-    const quizCount   = quizScores.length;
-
-    /* Détail par quiz : liste des scores séance par séance */
-    const quizDetail = quizScores.length
-      ? quizScores.map(q => `${q.score}/${q.total}`).join(', ')
-      : '';
-
+  if (!filtered.length) {
     html += `
-      <tr>
-        <td class="user-email-cell">
-          <span class="user-avatar-sm">👤</span>
-          <span class="user-email-text">${user.email}</span>
-        </td>
-        <td>
-          <button class="status-toggle-btn ${isApproved ? 'approved' : 'pending'}"
-            data-uid="${user.id}" data-status="${user.status}">
-            ${isApproved ? '✅ Approuvé' : '⏳ En attente'}
-          </button>
-        </td>
-        <td>
-          <select class="session-unlock-select" data-uid="${user.id}">
-            ${sessionOptions(maxUnlocked)}
-          </select>
-        </td>
-        <td>
-          <div class="progress-cell">
-            <span class="progress-fraction">${done} / ${total}</span>
-            <div class="mini-bar-track">
-              <div class="mini-bar-fill" style="width:${pct}%"></div>
-            </div>
-            <span class="progress-pct">${pct}%</span>
-          </div>
-        </td>
-        <td class="admin-quiz-cell">
-          ${avgQuiz !== null
-            ? `<span class="admin-quiz-avg ${avgQuiz >= 75 ? 'score-pass' : 'score-fail'}">${avgQuiz}&nbsp;%</span>
-               <span class="admin-quiz-count">${quizCount} quiz tenté${quizCount > 1 ? 's' : ''}</span>`
-            : '<span class="admin-quiz-none">—</span>'}
-        </td>
-        <td class="admin-delete-cell">
-          <button class="admin-delete-btn" data-uid="${user.id}" data-email="${user.email}"
-            title="Supprimer ce compte">🗑️</button>
-        </td>
-      </tr>`;
-  });
-
-  html += `</tbody></table>`;
-
-  /* Si pas d'élève actif, afficher un message au-dessus */
-  if (!students.length) {
-    html = `
       <div class="admin-empty">
-        <span>📭</span>
-        <p>Aucun élève actif. ${deleted.length} compte${deleted.length > 1 ? 's' : ''} supprimé${deleted.length > 1 ? 's' : ''} ci-dessous.</p>
+        <span>🔍</span>
+        <p>Aucun élève ne correspond à votre recherche.</p>
       </div>`;
+  } else {
+    html += `<div class="users-grid">`;
+
+    filtered.forEach(user => {
+      const m            = studentMetrics(user, total);
+      const isApproved   = user.status === 'approved';
+      const maxUnlocked  = user.maxSessionUnlocked || 0;
+      const initial      = (user.email || '?').charAt(0).toUpperCase();
+      const isExpanded   = expandedUserIds.has(user.id);
+      const statusLabel  = isApproved ? '✅ Approuvé' : '⏳ En attente';
+      const accessLabel  = maxUnlocked === 0 ? 'Aucun accès' : `Jusqu'à séance ${maxUnlocked}`;
+
+      /* Détail des quiz par séance (visible quand déplié) */
+      const allSessions = allSessionsFlat();
+      let quizDetailHtml = '';
+      if (m.quizScores.length) {
+        quizDetailHtml = '<div class="user-detail-quizzes"><p class="user-detail-title">Scores aux quiz</p><div class="quiz-pills">';
+        allSessions.forEach((s, idx) => {
+          const score = user.quizScores?.[s.id];
+          if (!score) return;
+          const passed = score.pct >= 75;
+          quizDetailHtml += `<span class="quiz-pill ${passed ? 'pass' : 'fail'}" title="${s.title}">
+            S${idx + 1} · ${score.pct}%
+          </span>`;
+        });
+        quizDetailHtml += '</div></div>';
+      }
+
+      html += `
+        <article class="user-card ${isApproved ? 'is-approved' : 'is-pending'}" data-uid="${user.id}">
+          <header class="user-card-header">
+            <div class="user-card-identity">
+              <span class="user-avatar-circle">${initial}</span>
+              <div class="user-card-meta">
+                <span class="user-card-email">${user.email}</span>
+                <span class="user-card-sub">
+                  Inscrit le ${fmtDate(user.createdAt)} · <span class="user-card-ago">${fmtAgo(user.createdAt)}</span>
+                </span>
+              </div>
+            </div>
+            <span class="user-card-status ${isApproved ? 'approved' : 'pending'}">${statusLabel}</span>
+          </header>
+
+          <div class="user-card-body">
+            <div class="user-card-kpi">
+              <span class="kpi-label">Progression</span>
+              <div class="kpi-bar">
+                <div class="kpi-bar-fill" style="width:${m.pct}%"></div>
+              </div>
+              <span class="kpi-value">${m.done} / ${total} <span class="kpi-pct">(${m.pct}%)</span></span>
+            </div>
+            <div class="user-card-kpi user-card-kpi-side">
+              <span class="kpi-label">Moyenne quiz</span>
+              <span class="kpi-value ${m.avgQuiz !== null ? (m.avgQuiz >= 75 ? 'kpi-pass' : 'kpi-fail') : ''}">
+                ${m.avgQuiz !== null ? m.avgQuiz + '%' : '—'}
+                <span class="kpi-count">${m.quizCount > 0 ? `(${m.quizCount} quiz)` : ''}</span>
+              </span>
+            </div>
+            <div class="user-card-kpi user-card-kpi-side">
+              <span class="kpi-label">Accès débloqué</span>
+              <span class="kpi-value">${accessLabel}</span>
+            </div>
+          </div>
+
+          <footer class="user-card-actions">
+            <button class="status-toggle-btn ${isApproved ? 'approved' : 'pending'}"
+              data-uid="${user.id}" data-status="${user.status}">
+              ${isApproved ? "Retirer l'approbation" : '✓ Approuver'}
+            </button>
+            <select class="session-unlock-select" data-uid="${user.id}" title="Modifier l'accès">
+              ${sessionOptions(maxUnlocked)}
+            </select>
+            <button class="user-card-detail-btn" data-uid="${user.id}" title="${isExpanded ? 'Réduire' : 'Voir le détail'}">
+              ${isExpanded ? '▴ Réduire' : '▾ Détails'}
+            </button>
+            <button class="admin-delete-btn" data-uid="${user.id}" data-email="${user.email}"
+              title="Supprimer ce compte">🗑️</button>
+          </footer>
+
+          ${isExpanded ? `<div class="user-card-detail">${quizDetailHtml || "<p class='user-detail-empty'>Aucun quiz tenté pour l'instant.</p>"}</div>` : ''}
+        </article>`;
+    });
+
+    html += `</div>`;
   }
 
   /* Section des comptes supprimés (repliable) */
@@ -1541,36 +1661,43 @@ function renderUsersTable(users) {
         <summary class="admin-deleted-summary">
           🗂️ Comptes supprimés (${deleted.length})
         </summary>
-        <table class="users-table users-table-deleted">
-          <thead>
-            <tr>
-              <th>Élève</th>
-              <th>Progression conservée</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>`;
+        <div class="users-grid users-grid-deleted">`;
     deleted.forEach(user => {
       const done = (user.completedSessions || []).length;
+      const initial = (user.email || '?').charAt(0).toUpperCase();
       html += `
-        <tr>
-          <td class="user-email-cell">
-            <span class="user-avatar-sm">👤</span>
-            <span class="user-email-text">${user.email}</span>
-          </td>
-          <td>${done} / ${total} séances</td>
-          <td class="admin-delete-cell">
-            <button class="admin-restore-btn" data-uid="${user.id}"
-              title="Restaurer ce compte">↩️ Restaurer</button>
-          </td>
-        </tr>`;
+        <article class="user-card user-card-deleted">
+          <header class="user-card-header">
+            <div class="user-card-identity">
+              <span class="user-avatar-circle">${initial}</span>
+              <div class="user-card-meta">
+                <span class="user-card-email">${user.email}</span>
+                <span class="user-card-sub">Supprimé · ${done} / ${total} séances conservées</span>
+              </div>
+            </div>
+            <span class="user-card-status deleted">🚫 Désactivé</span>
+          </header>
+          <footer class="user-card-actions">
+            <button class="admin-restore-btn" data-uid="${user.id}">↩️ Restaurer</button>
+          </footer>
+        </article>`;
     });
-    html += `</tbody></table></details>`;
+    html += `</div></details>`;
   }
 
   usersTableWrapper.innerHTML = html;
 
   /* ---- Listeners sur les contrôles générés ---- */
+
+  /* Toggle expand/collapse du détail élève */
+  usersTableWrapper.querySelectorAll('.user-card-detail-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const uid = btn.dataset.uid;
+      if (expandedUserIds.has(uid)) expandedUserIds.delete(uid);
+      else expandedUserIds.add(uid);
+      renderUsersTable(adminUsersCache);
+    });
+  });
 
   /* Toggle statut (pending ↔ approved) */
   usersTableWrapper.querySelectorAll('.status-toggle-btn').forEach(btn => {
@@ -1680,6 +1807,52 @@ function openDeleteModal(email, onConfirm) {
   confirmBtn.addEventListener('click', onConfirmClick);
   cancelBtn.addEventListener('click', closeModal);
 }
+
+/* ============================================================
+   19c. ADMIN — Toolbar (recherche, filtres, tri)
+   ============================================================ */
+
+(function () {
+  const searchInput = document.getElementById('admin-search');
+  const clearBtn    = document.getElementById('admin-search-clear');
+  const filtersEl   = document.getElementById('admin-filters');
+  const sortSelect  = document.getElementById('admin-sort');
+
+  if (!searchInput || !filtersEl || !sortSelect) return;
+
+  /* Recherche par e-mail (debounce léger) */
+  let searchTimer = null;
+  searchInput.addEventListener('input', () => {
+    clearBtn.classList.toggle('hidden', searchInput.value === '');
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      adminSearch = searchInput.value.trim();
+      renderUsersTable(adminUsersCache);
+    }, 150);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    clearBtn.classList.add('hidden');
+    adminSearch = '';
+    renderUsersTable(adminUsersCache);
+    searchInput.focus();
+  });
+
+  /* Filtres */
+  filtersEl.addEventListener('click', (e) => {
+    const chip = e.target.closest('.admin-filter-chip');
+    if (!chip) return;
+    adminFilter = chip.dataset.filter;
+    renderUsersTable(adminUsersCache);
+  });
+
+  /* Tri */
+  sortSelect.addEventListener('change', () => {
+    adminSort = sortSelect.value;
+    renderUsersTable(adminUsersCache);
+  });
+})();
 
 /* ============================================================
    20. SIDEBAR MOBILE
