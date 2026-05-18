@@ -109,6 +109,7 @@ const authResetView     = document.getElementById('auth-reset-view');
 
 /* Plateforme */
 const pendingScreen      = document.getElementById('pending-screen');
+const deletedScreen      = document.getElementById('deleted-screen');
 const lessonView         = document.getElementById('lesson-view');
 const lessonContent      = document.getElementById('lesson-content');
 const homeScreen         = document.getElementById('home-screen');
@@ -337,7 +338,9 @@ function startUserDocListener(uid) {
     sidebarAdminWrapper.classList.toggle('hidden', !isAdmin);
     if (isAdmin) startAdminUsersListener();
 
-    if (userDoc.status === 'pending') {
+    if (userDoc.status === 'deleted') {
+      showDeletedScreen();
+    } else if (userDoc.status === 'pending') {
       showPendingScreen();
     } else {
       showPlatform();
@@ -354,8 +357,22 @@ function startUserDocListener(uid) {
 /** Affiche l'écran d'attente (status: pending). */
 function showPendingScreen() {
   pendingScreen.classList.remove('hidden');
+  deletedScreen.classList.add('hidden');
   lessonView.classList.add('hidden');
   /* Masquer les éléments de cours dans la sidebar */
+  progressContainer.classList.add('hidden');
+  sidebarHomeWrapper.classList.add('hidden');
+  courseNav.classList.add('hidden');
+}
+
+/** Affiche l'écran "accès désactivé" (status: deleted). */
+function showDeletedScreen() {
+  deletedScreen.classList.remove('hidden');
+  pendingScreen.classList.add('hidden');
+  lessonView.classList.add('hidden');
+  adminPanel.classList.add('hidden');
+  sidebarAdminWrapper.classList.add('hidden');
+  /* Masquer toute la navigation de cours */
   progressContainer.classList.add('hidden');
   sidebarHomeWrapper.classList.add('hidden');
   courseNav.classList.add('hidden');
@@ -364,6 +381,7 @@ function showPendingScreen() {
 /** Affiche la plateforme complète (status: approved). */
 function showPlatform() {
   pendingScreen.classList.add('hidden');
+  deletedScreen.classList.add('hidden');
   /* Ne pas interférer si le tableau de bord admin est actif */
   if (!adminPanelActive) lessonView.classList.remove('hidden');
   /* Afficher les éléments de cours dans la sidebar */
@@ -390,6 +408,7 @@ function hidePlatform() {
   platformShown    = false;
   adminPanel.classList.add('hidden');
   pendingScreen.classList.add('hidden');
+  deletedScreen.classList.add('hidden');
   lessonView.classList.remove('hidden');
   lessonContent.classList.add('hidden');
   homeScreen.classList.add('hidden');
@@ -1374,7 +1393,7 @@ function startAdminUsersListener() {
    ============================================================ */
 
 function renderAdminStats(users) {
-  const students    = users.filter(u => u.role !== 'admin');
+  const students    = users.filter(u => u.role !== 'admin' && u.status !== 'deleted');
   const approved    = students.filter(u => u.status === 'approved').length;
   const pending     = students.filter(u => u.status === 'pending').length;
   const total       = totalSessions();
@@ -1410,10 +1429,12 @@ function renderAdminStats(users) {
    ============================================================ */
 
 function renderUsersTable(users) {
-  const students = users.filter(u => u.role !== 'admin');
-  const total    = totalSessions();
+  const allStudents = users.filter(u => u.role !== 'admin');
+  const students    = allStudents.filter(u => u.status !== 'deleted');
+  const deleted     = allStudents.filter(u => u.status === 'deleted');
+  const total       = totalSessions();
 
-  if (!students.length) {
+  if (!students.length && !deleted.length) {
     usersTableWrapper.innerHTML = `
       <div class="admin-empty">
         <span>📭</span>
@@ -1503,6 +1524,50 @@ function renderUsersTable(users) {
   });
 
   html += `</tbody></table>`;
+
+  /* Si pas d'élève actif, afficher un message au-dessus */
+  if (!students.length) {
+    html = `
+      <div class="admin-empty">
+        <span>📭</span>
+        <p>Aucun élève actif. ${deleted.length} compte${deleted.length > 1 ? 's' : ''} supprimé${deleted.length > 1 ? 's' : ''} ci-dessous.</p>
+      </div>`;
+  }
+
+  /* Section des comptes supprimés (repliable) */
+  if (deleted.length) {
+    html += `
+      <details class="admin-deleted-section">
+        <summary class="admin-deleted-summary">
+          🗂️ Comptes supprimés (${deleted.length})
+        </summary>
+        <table class="users-table users-table-deleted">
+          <thead>
+            <tr>
+              <th>Élève</th>
+              <th>Progression conservée</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>`;
+    deleted.forEach(user => {
+      const done = (user.completedSessions || []).length;
+      html += `
+        <tr>
+          <td class="user-email-cell">
+            <span class="user-avatar-sm">👤</span>
+            <span class="user-email-text">${user.email}</span>
+          </td>
+          <td>${done} / ${total} séances</td>
+          <td class="admin-delete-cell">
+            <button class="admin-restore-btn" data-uid="${user.id}"
+              title="Restaurer ce compte">↩️ Restaurer</button>
+          </td>
+        </tr>`;
+    });
+    html += `</tbody></table></details>`;
+  }
+
   usersTableWrapper.innerHTML = html;
 
   /* ---- Listeners sur les contrôles générés ---- */
@@ -1537,22 +1602,83 @@ function renderUsersTable(users) {
     });
   });
 
-  /* Supprimer un compte */
+  /* Supprimer un compte (soft-delete via modal de confirmation) */
   usersTableWrapper.querySelectorAll('.admin-delete-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       const uid   = btn.dataset.uid;
       const email = btn.dataset.email;
-      if (!confirm(`Supprimer le compte de ${email} ?\n\nCette action est irréversible.`)) return;
+      openDeleteModal(email, async () => {
+        btn.disabled = true;
+        try {
+          await db.collection('users').doc(uid).update({
+            status: 'deleted',
+            deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          showToast(`Compte de ${email} désactivé.`);
+        } catch (err) {
+          console.error('Erreur suppression :', err);
+          btn.disabled = false;
+          showToast('❌ Échec de la suppression — réessayez.', 'error');
+        }
+      });
+    });
+  });
+
+  /* Restaurer un compte (status: deleted → pending) */
+  usersTableWrapper.querySelectorAll('.admin-restore-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const uid = btn.dataset.uid;
       btn.disabled = true;
       try {
-        await db.collection('users').doc(uid).delete();
-        /* Le onSnapshot met à jour le tableau automatiquement */
+        await db.collection('users').doc(uid).update({
+          status: 'pending',
+          deletedAt: firebase.firestore.FieldValue.delete()
+        });
+        showToast('Compte restauré (en attente d\'approbation).');
       } catch (err) {
-        console.error('Erreur suppression :', err);
+        console.error('Erreur restauration :', err);
         btn.disabled = false;
       }
     });
   });
+}
+
+/* ============================================================
+   19b. ADMIN — Modal de confirmation suppression
+   ============================================================ */
+
+function openDeleteModal(email, onConfirm) {
+  const modal     = document.getElementById('delete-modal');
+  const emailEl   = document.getElementById('delete-modal-email');
+  const input     = document.getElementById('delete-modal-input');
+  const confirmBtn = document.getElementById('delete-modal-confirm');
+  const cancelBtn  = document.getElementById('delete-modal-cancel');
+
+  emailEl.textContent = email;
+  input.value = '';
+  confirmBtn.disabled = true;
+  modal.classList.remove('hidden');
+  setTimeout(() => input.focus(), 50);
+
+  const closeModal = () => {
+    modal.classList.add('hidden');
+    input.removeEventListener('input', onInput);
+    confirmBtn.removeEventListener('click', onConfirmClick);
+    cancelBtn.removeEventListener('click', closeModal);
+  };
+
+  const onInput = () => {
+    confirmBtn.disabled = input.value.trim() !== 'SUPPRIMER';
+  };
+
+  const onConfirmClick = () => {
+    closeModal();
+    onConfirm();
+  };
+
+  input.addEventListener('input', onInput);
+  confirmBtn.addEventListener('click', onConfirmClick);
+  cancelBtn.addEventListener('click', closeModal);
 }
 
 /* ============================================================

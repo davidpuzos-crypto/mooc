@@ -1835,6 +1835,120 @@ img, iframe { max-width: 100%; display: block; }
 .admin-delete-btn:hover { background: rgba(239,68,68,0.08); border-color: #ef4444; }
 .admin-delete-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* Section "Comptes supprimés" (repliable) */
+.admin-deleted-section {
+  margin-top: 32px;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.02);
+  overflow: hidden;
+}
+.admin-deleted-summary {
+  cursor: pointer;
+  padding: 14px 20px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  user-select: none;
+}
+.admin-deleted-summary:hover { background: rgba(0,0,0,0.04); }
+.users-table-deleted { opacity: 0.75; }
+
+/* Bouton "Restaurer" */
+.admin-restore-btn {
+  background: none;
+  border: 1px solid rgba(34,197,94,0.4);
+  border-radius: 6px;
+  color: #16a34a;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 5px 10px;
+  transition: background 0.15s;
+}
+.admin-restore-btn:hover { background: rgba(34,197,94,0.08); }
+.admin-restore-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Modal de confirmation de suppression */
+.delete-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.delete-modal.hidden { display: none; }
+.delete-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(2px);
+}
+.delete-modal-card {
+  position: relative;
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px 28px 24px;
+  max-width: 460px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: deleteModalIn 0.18s ease-out;
+}
+@keyframes deleteModalIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+.delete-modal-title {
+  margin: 0 0 14px;
+  font-size: 1.15rem;
+  color: #ef4444;
+}
+.delete-modal-text { margin: 0 0 10px; font-size: 0.95rem; color: var(--text-primary); }
+.delete-modal-warning {
+  margin: 0 0 18px;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  background: rgba(251,191,36,0.1);
+  border-left: 3px solid #fbbf24;
+  padding: 10px 14px;
+  border-radius: 6px;
+}
+.delete-modal-label { display: block; font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 8px; }
+.delete-modal-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid rgba(0,0,0,0.15);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: monospace;
+  letter-spacing: 0.05em;
+  margin-bottom: 18px;
+  transition: border-color 0.15s;
+}
+.delete-modal-input:focus { outline: none; border-color: #ef4444; }
+.delete-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.delete-modal-btn {
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, opacity 0.15s;
+}
+.delete-modal-btn-cancel {
+  background: rgba(0,0,0,0.05);
+  color: var(--text-primary);
+}
+.delete-modal-btn-cancel:hover { background: rgba(0,0,0,0.08); }
+.delete-modal-btn-confirm {
+  background: #ef4444;
+  color: #fff;
+}
+.delete-modal-btn-confirm:hover:not(:disabled) { background: #dc2626; }
+.delete-modal-btn-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+
 /* Responsive admin */
 @media (max-width: 900px) {
   .admin-panel { padding: 24px 20px 40px; }

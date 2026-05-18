@@ -691,6 +691,17 @@
         </p>
       </div>
 
+      <!-- Écran "compte supprimé / accès révoqué" -->
+      <div id="deleted-screen" class="pending-screen hidden">
+        <div class="pending-icon">🚫</div>
+        <h2 class="pending-title">Accès indisponible</h2>
+        <p class="pending-text">
+          Votre accès à la plateforme a été désactivé.<br><br>
+          Si vous pensez qu'il s'agit d'une erreur, contactez votre formateur à
+          l'adresse <a href="mailto:davidpuzos@tisselia.com">davidpuzos@tisselia.com</a>.
+        </p>
+      </div>
+
       <!-- Zone d'affichage du contenu (status: approved) -->
       <div id="lesson-view" class="lesson-view">
 
@@ -822,6 +833,35 @@
     </main>
 
   </div><!-- /app-wrapper -->
+
+  <!-- Modal de confirmation suppression compte (admin) -->
+  <div id="delete-modal" class="delete-modal hidden" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+    <div class="delete-modal-backdrop"></div>
+    <div class="delete-modal-card">
+      <h3 id="delete-modal-title" class="delete-modal-title">⚠️ Supprimer ce compte ?</h3>
+      <p class="delete-modal-text">
+        Vous êtes sur le point de désactiver le compte de
+        <strong id="delete-modal-email"></strong>.
+      </p>
+      <p class="delete-modal-warning">
+        L'élève perdra l'accès à la plateforme. Sa progression reste conservée,
+        vous pourrez restaurer son compte plus tard si besoin.
+      </p>
+      <label class="delete-modal-label" for="delete-modal-input">
+        Pour confirmer, tapez <strong>SUPPRIMER</strong> ci-dessous :
+      </label>
+      <input type="text" id="delete-modal-input" class="delete-modal-input"
+        placeholder="SUPPRIMER" autocomplete="off" />
+      <div class="delete-modal-actions">
+        <button id="delete-modal-cancel" class="delete-modal-btn delete-modal-btn-cancel" type="button">
+          Annuler
+        </button>
+        <button id="delete-modal-confirm" class="delete-modal-btn delete-modal-btn-confirm" type="button" disabled>
+          Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
 
   <script src="data.js"></script>
   <script src="app.js"></script>
