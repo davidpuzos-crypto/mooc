@@ -1523,7 +1523,7 @@ function mailWelcome(email) {
 Bonne nouvelle : votre accès à la formation « Intelligence Artificielle & Cybersécurité » est désormais activé !
 
 Connectez-vous dès maintenant sur :
-\u{1F517} https://tisselia.com
+\u{1F517} https://tisselia.fr
 
 Comment démarrer :
 1. Connectez-vous avec l’adresse e-mail utilisée lors de votre inscription
@@ -1551,7 +1551,7 @@ Je me permets de vous écrire car nous avons remarqué que vous ne vous êtes pa
 
 Votre formation « Intelligence Artificielle & Cybersécurité » vous attend toujours, et votre progression est sauvegardée — vous pouvez reprendre exactement là où vous en étiez.
 
-\u{1F517} https://tisselia.com
+\u{1F517} https://tisselia.fr
 
 N’hésitez pas à me contacter si vous rencontrez une difficulté ou si vous avez des questions sur le contenu.
 
